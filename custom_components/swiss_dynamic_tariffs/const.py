@@ -1,42 +1,49 @@
 """Constants for Swiss Dynamic Tariffs."""
 
-# Base component constants
-NAME = "Swiss Dynamic Tariffs"
-DOMAIN = "swiss_dynamic_tariffs"
-DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.0.0"
+from typing import Final
 
-ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
-ISSUE_URL = "https://github.com/ehnid/swiss-dynamic-tariffs-template/issues"
+DOMAIN: Final = "swiss_dynamic_tariffs"
 
-# Icons
-ICON = "mdi:format-quote-close"
+NAME: Final = "Swiss Dynamic Tariffs"
 
-# Device classes
-BINARY_SENSOR_DEVICE_CLASS = "connectivity"
+VERSION: Final = "0.1.0"
 
-# Platforms
-BINARY_SENSOR = "binary_sensor"
-SENSOR = "sensor"
-SWITCH = "switch"
-PLATFORMS = [BINARY_SENSOR, SENSOR, SWITCH]
+DEFAULT_SCAN_INTERVAL: Final = 900
 
 
-# Configuration and options
-CONF_ENABLED = "enabled"
-CONF_USERNAME = "username"
-CONF_PASSWORD = "password"
+# Configuration keys
 
-# Defaults
-DEFAULT_NAME = DOMAIN
+CONF_PROVIDER: Final = "provider"
+CONF_API_URL: Final = "api_url"
+CONF_API_KEY: Final = "api_key"
 
 
-STARTUP_MESSAGE = f"""
--------------------------------------------------------------------
+# Supported providers
+
+PROVIDER_BKW: Final = "bkw"
+PROVIDER_CKW: Final = "ckw"
+PROVIDER_GROUPE_E: Final = "groupe_e"
+PROVIDER_CUSTOM: Final = "custom"
+
+
+PROVIDERS: Final = {
+    PROVIDER_BKW: "BKW",
+    PROVIDER_CKW: "CKW",
+    PROVIDER_GROUPE_E: "Groupe E",
+    PROVIDER_CUSTOM: "Custom",
+}
+
+
+# Sensor types
+
+SENSOR_CURRENT_PRICE: Final = "current_price"
+SENSOR_NEXT_PRICE: Final = "next_price"
+SENSOR_TODAY_MIN: Final = "today_min"
+SENSOR_TODAY_MAX: Final = "today_max"
+SENSOR_AVERAGE_PRICE: Final = "average_price"
+
+
+STARTUP_MESSAGE: Final = f"""
 {NAME}
 Version: {VERSION}
-This is a custom integration!
-If you have any issues with this you need to open an issue here:
-{ISSUE_URL}
--------------------------------------------------------------------
 """
