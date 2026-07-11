@@ -1,0 +1,13 @@
+{
+  "_checkout": null,
+  "_output_dir": "C:\\Users\\thoma\\Daten Thomas\\Dokumente\\Computer\\Coding\\GitHub",
+  "_repo_dir": "C:\\Users\\thoma\\.cookiecutters\\cookiecutter-homeassistant-custom-component",
+  "_template": "gh:oncleben31/cookiecutter-homeassistant-custom-component",
+  "class_name_prefix": "SwissDynamicTariffs",
+  "domain_name": "swiss_dynamic_tariffs",
+  "friendly_name": "Swiss Dynamic Tariffs",
+  "github_user": "ehnid",
+  "project_name": "swiss-dynamic-tariffs-template",
+  "test_suite": "yes",
+  "version": "0.0.0"
+}

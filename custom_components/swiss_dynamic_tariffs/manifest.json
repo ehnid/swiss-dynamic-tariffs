@@ -1,0 +1,10 @@
+{
+  "domain": "swiss_dynamic_tariffs",
+  "name": "Swiss Dynamic Tariffs",
+  "documentation": "https://github.com/ehnid/swiss-dynamic-tariffs-template",
+  "issue_tracker": "https://github.com/ehnid/swiss-dynamic-tariffs-template/issues",
+  "dependencies": [],
+  "config_flow": true,
+  "codeowners": ["@ehnid"],
+  "requirements": []
+}
