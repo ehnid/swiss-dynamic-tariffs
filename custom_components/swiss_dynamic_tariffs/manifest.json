@@ -8,5 +8,5 @@
   "dependencies": [],
   "requirements": [],
   "codeowners": ["@ehnid"],
-  "iot_class": "Cloud Polling"
+  "iot_class": "cloud_polling"
 }

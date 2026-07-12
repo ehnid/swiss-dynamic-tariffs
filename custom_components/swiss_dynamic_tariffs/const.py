@@ -33,6 +33,7 @@ PROVIDERS: Final = {
     PROVIDER_CUSTOM: "Custom",
 }
 
+BKW_API_URL = "https://api.bkw.ch/api/dyntariffs/v1/tariffs/"
 
 # Sensor types
 

@@ -1,33 +1,20 @@
 """Data models for Swiss Dynamic Tariffs."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
 
-@dataclass(frozen=True)
-class TariffPrice:
-    """Represents a single electricity tariff price."""
-
-    timestamp: datetime
-    price: Decimal
-    currency: str = "CHF"
-    unit: str = "kWh"
-
-
-@dataclass(frozen=True)
+@dataclass
 class TariffPeriod:
-    """Represents a tariff period with multiple prices."""
+    """A single tariff interval."""
 
-    prices: list[TariffPrice]
+    start: datetime
+    end: datetime
 
-    @property
-    def latest(self) -> TariffPrice | None:
-        """Return the latest available price."""
-        if not self.prices:
-            return None
-
-        return max(
-            self.prices,
-            key=lambda item: item.timestamp,
-        )
+    electricity: Decimal | None = None
+    feed_in: Decimal | None = None
+    grid: Decimal | None = None
+    integrated: Decimal | None = None
