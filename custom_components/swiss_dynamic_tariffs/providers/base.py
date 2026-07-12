@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from custom_components.swiss_dynamic_tariffs.models import TariffPeriod
+from ..models import TariffPeriod
 
 
 class TariffProvider(ABC):

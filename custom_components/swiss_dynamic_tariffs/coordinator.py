@@ -8,6 +8,7 @@ import logging
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
+    UpdateFailed,
 )
 
 from .const import DEFAULT_SCAN_INTERVAL
@@ -18,7 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SwissDynamicTariffsCoordinator(
-    DataUpdateCoordinator[TariffPeriod],
+    DataUpdateCoordinator[list[TariffPeriod]],
 ):
     """Coordinator to manage tariff updates."""
 
@@ -41,6 +42,9 @@ class SwissDynamicTariffsCoordinator(
 
     async def _async_update_data(
         self,
-    ) -> TariffPeriod:
+    ) -> list[TariffPeriod]:
         """Fetch data from the configured provider."""
-        return await self.provider.async_get_tariffs()
+        try:
+            return await self.provider.async_get_tariffs()
+        except Exception as err:
+            raise UpdateFailed(f"Unable to fetch tariffs: {err}") from err
