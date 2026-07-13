@@ -11,5 +11,7 @@ class TariffProvider(ABC):
     """Abstract base class for tariff providers."""
 
     @abstractmethod
-    async def async_get_tariffs(self) -> list[TariffPeriod]:
+    async def async_get_tariffs(
+        self,
+    ) -> list[TariffPeriod]:
         """Return tariff periods."""

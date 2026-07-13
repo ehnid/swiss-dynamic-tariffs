@@ -8,7 +8,11 @@ NAME: Final = "Swiss Dynamic Tariffs"
 
 VERSION: Final = "0.1.0"
 
+ATTRIBUTION = "Data provided by BKW"
+
 DEFAULT_SCAN_INTERVAL: Final = 900
+
+PLATFORMS: list[str] = []
 
 
 # Configuration keys

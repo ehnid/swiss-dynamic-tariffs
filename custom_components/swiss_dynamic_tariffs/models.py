@@ -1,20 +1,16 @@
-"""Data models for Swiss Dynamic Tariffs."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from decimal import Decimal
 
 
 @dataclass
 class TariffPeriod:
-    """A single tariff interval."""
+    """Single tariff period."""
 
     start: datetime
     end: datetime
-
-    electricity: Decimal | None = None
-    feed_in: Decimal | None = None
-    grid: Decimal | None = None
-    integrated: Decimal | None = None
+    electricity: float | None = None
+    feed_in: float | None = None
+    grid: float | None = None
+    integrated: float | None = None

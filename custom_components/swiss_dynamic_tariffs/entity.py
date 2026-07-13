@@ -1,37 +1,50 @@
-"""SwissDynamicTariffsEntity class"""
+"""Base entity for Swiss Dynamic Tariffs."""
+
+from __future__ import annotations
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTRIBUTION
-from .const import DOMAIN
-from .const import NAME
-from .const import VERSION
+from .const import ATTRIBUTION, DOMAIN, NAME, VERSION
+from .coordinator import SwissDynamicTariffsCoordinator
 
 
-class SwissDynamicTariffsEntity(CoordinatorEntity):
-    def __init__(self, coordinator, config_entry):
+class SwissDynamicTariffsEntity(
+    CoordinatorEntity[SwissDynamicTariffsCoordinator],
+):
+    """Base entity for Swiss Dynamic Tariffs."""
+
+    def __init__(
+        self,
+        coordinator: SwissDynamicTariffsCoordinator,
+        config_entry,
+    ) -> None:
+        """Initialize entity."""
+
         super().__init__(coordinator)
+
         self.config_entry = config_entry
 
     @property
-    def unique_id(self):
-        """Return a unique ID to use for this entity."""
-        return self.config_entry.entry_id
-
-    @property
     def device_info(self):
+        """Return device information."""
+
         return {
-            "identifiers": {(DOMAIN, self.unique_id)},
+            "identifiers": {
+                (
+                    DOMAIN,
+                    self.config_entry.entry_id,
+                )
+            },
             "name": NAME,
-            "model": VERSION,
             "manufacturer": NAME,
+            "model": VERSION,
         }
 
     @property
-    def device_state_attributes(self):
-        """Return the state attributes."""
+    def extra_state_attributes(self):
+        """Return additional attributes."""
+
         return {
             "attribution": ATTRIBUTION,
-            "id": str(self.coordinator.data.get("id")),
             "integration": DOMAIN,
         }

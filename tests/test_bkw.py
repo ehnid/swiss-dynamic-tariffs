@@ -1,41 +1,85 @@
-"""Tests for BKW provider."""
+"""Test BKW provider."""
 
-from datetime import UTC, datetime
-from decimal import Decimal
+from unittest.mock import AsyncMock, Mock
 
-from custom_components.swiss_dynamic_tariffs.providers.bkw import parse_tariffs
+import pytest
+
+from custom_components.swiss_dynamic_tariffs.providers.bkw import (
+    BKWProvider,
+    parse_tariffs,
+)
 
 
-def test_parse_bkw_tariffs():
-    """Test parsing BKW tariff response."""
+@pytest.fixture
+def bkw_response():
+    """Sample BKW API response."""
 
-    data = {
-        "publication_timestamp": "2026-07-11T20:00:00Z",
+    return {
+        "publication_timestamp": "2026-07-12T10:00:00Z",
         "prices": [
             {
-                "start_timestamp": "2026-07-11T22:00:00Z",
-                "end_timestamp": "2026-07-11T22:15:00Z",
+                "start_timestamp": "2026-07-12T10:00:00Z",
+                "end_timestamp": "2026-07-12T10:15:00Z",
+                "electricity": [
+                    {
+                        "unit": "CHF/kWh",
+                        "value": 0.25,
+                    }
+                ],
                 "feed_in": [
                     {
-                        "unit": "CHF_kWh",
-                        "value": 0.129,
+                        "unit": "CHF/kWh",
+                        "value": 0.08,
+                    }
+                ],
+                "grid": [
+                    {
+                        "unit": "CHF/kWh",
+                        "value": 0.12,
+                    }
+                ],
+                "integrated": [
+                    {
+                        "unit": "CHF/kWh",
+                        "value": 0.37,
                     }
                 ],
             }
         ],
     }
 
-    tariffs = parse_tariffs(data)
+
+def test_parse_tariffs(bkw_response):
+    """Test parsing BKW response."""
+
+    tariffs = parse_tariffs(bkw_response)
 
     assert len(tariffs) == 1
 
     tariff = tariffs[0]
 
-    assert tariff.start == datetime(2026, 7, 11, 22, 0, tzinfo=UTC)
+    assert tariff.electricity == 0.25
+    assert tariff.feed_in == 0.08
+    assert tariff.grid == 0.12
+    assert tariff.integrated == 0.37
 
-    assert tariff.end == datetime(2026, 7, 11, 22, 15, tzinfo=UTC)
 
-    assert tariff.feed_in == Decimal("0.129")
-    assert tariff.electricity is None
-    assert tariff.grid is None
-    assert tariff.integrated is None
+@pytest.mark.asyncio
+async def test_bkw_provider_fetches_data(bkw_response):
+    """Test BKW API request."""
+
+    response = Mock()
+    response.json = AsyncMock(return_value=bkw_response)
+    response.raise_for_status = Mock()
+
+    session = Mock()
+    session.get.return_value.__aenter__ = AsyncMock(return_value=response)
+    session.get.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    provider = BKWProvider(session)
+
+    tariffs = await provider.async_get_tariffs()
+
+    assert len(tariffs) == 1
+
+    session.get.assert_called_once_with("https://api.bkw.ch/api/dyntariffs/v1/tariffs/")

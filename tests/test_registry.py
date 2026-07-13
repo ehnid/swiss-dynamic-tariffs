@@ -1,0 +1,16 @@
+"""Test provider registry."""
+
+from custom_components.swiss_dynamic_tariffs.providers.bkw import (
+    BKWProvider,
+)
+from custom_components.swiss_dynamic_tariffs.providers.registry import (
+    get_provider,
+)
+
+
+def test_get_bkw_provider():
+    """Test BKW provider lookup."""
+
+    provider = get_provider("bkw")
+
+    assert provider is BKWProvider

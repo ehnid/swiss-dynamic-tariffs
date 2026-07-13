@@ -11,9 +11,11 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
+from homeassistant.config_entries import ConfigEntry
+
 from .const import DEFAULT_SCAN_INTERVAL
 from .models import TariffPeriod
-from .providers.base import BaseProvider
+from .providers.base import TariffProvider
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,7 +28,8 @@ class SwissDynamicTariffsCoordinator(
     def __init__(
         self,
         hass: HomeAssistant,
-        provider: BaseProvider,
+        provider: TariffProvider,
+        entry: ConfigEntry | None = None,
     ) -> None:
         """Initialize the coordinator."""
         self.provider = provider
@@ -38,6 +41,7 @@ class SwissDynamicTariffsCoordinator(
             update_interval=timedelta(
                 seconds=DEFAULT_SCAN_INTERVAL,
             ),
+            config_entry=entry,
         )
 
     async def _async_update_data(

@@ -1,37 +1,115 @@
 """Sensor platform for Swiss Dynamic Tariffs."""
 
-from .const import DEFAULT_NAME
+from __future__ import annotations
+
+from homeassistant.components.sensor import SensorEntity
+# from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
 from .const import DOMAIN
-from .const import ICON
-from .const import SENSOR
+from .coordinator import SwissDynamicTariffsCoordinator
+
 from .entity import SwissDynamicTariffsEntity
 
+from typing import Literal
 
-async def async_setup_entry(hass, entry, async_add_devices):
-    """Setup sensor platform."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_devices([SwissDynamicTariffsSensor(coordinator, entry)])
+TariffType = Literal[
+    "electricity",
+    "feed_in",
+    "grid",
+    "integrated",
+]
 
 
-class SwissDynamicTariffsSensor(SwissDynamicTariffsEntity):
-    """swiss_dynamic_tariffs Sensor class."""
+async def async_setup_entry(
+    hass,
+    entry,
+    async_add_entities,
+) -> None:
+    """Set up tariff sensors."""
+
+    coordinator: SwissDynamicTariffsCoordinator = hass.data[DOMAIN][entry.entry_id]
+
+    async_add_entities(
+        [
+            SwissDynamicTariffSensor(
+                coordinator,
+                "electricity",
+            ),
+            SwissDynamicTariffSensor(
+                coordinator,
+                "feed_in",
+            ),
+            SwissDynamicTariffSensor(
+                coordinator,
+                "grid",
+            ),
+            SwissDynamicTariffSensor(
+                coordinator,
+                "integrated",
+            ),
+        ]
+    )
+
+
+class SwissDynamicTariffSensor(
+    SwissDynamicTariffsEntity,
+    SensorEntity,
+):
+    """Sensor showing current tariff value."""
+
+    def __init__(
+        self,
+        coordinator: SwissDynamicTariffsCoordinator,
+        tariff_type: TariffType,
+    ) -> None:
+        """Initialize sensor."""
+
+        super().__init__(coordinator)
+
+        self._tariff_type = tariff_type
+
+        self._attr_unique_id = (
+            f"{DOMAIN}_{coordinator.config_entry.entry_id}_{tariff_type}"
+        )
+
+        self._attr_has_entity_name = True
+
+        self._attr_native_unit_of_measurement = "CHF/kWh"
+
+    # @property
+    # def extra_state_attributes(self):
+    #     """Return tariff metadata."""
+
+    #     if not isinstance(self.coordinator.data, list):
+    #         return None
+
+    #     if not self.coordinator.data:
+    #         return None
+
+    #     tariff = self.coordinator.data[0]
+
+    #     return getattr(
+    #         tariff,
+    #         self._tariff_type,
+    #         None,
+    #     )
 
     @property
-    def name(self):
-        """Return the name of the sensor."""
-        return f"{DEFAULT_NAME}_{SENSOR}"
+    def native_value(self):
+        """Return current tariff."""
 
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        return self.coordinator.data.get("body")
+        print("DATA:", self.coordinator.data)
+        print("TYPE:", type(self.coordinator.data))
 
-    @property
-    def icon(self):
-        """Return the icon of the sensor."""
-        return ICON
+        if not self.coordinator.data:
+            return None
 
-    @property
-    def device_class(self):
-        """Return de device class of the sensor."""
-        return "swiss_dynamic_tariffs__custom_device_class"
+        tariff = self.coordinator.data[0]
+
+        print("TARIFF:", tariff)
+
+        return getattr(
+            tariff,
+            self._tariff_type,
+            None,
+        )
