@@ -77,8 +77,7 @@ jobs:
           pip install -r requirements_test.txt
       - name: Install pre-commit
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install "pre-commit>=4.0.0"
+          pip install "pre-commit>=4.0.0"
       - name: Tests suite
         run: |
           pytest \
