@@ -11,6 +11,10 @@ from .const import DOMAIN, PLATFORMS
 from .coordinator import SwissDynamicTariffsCoordinator
 from .providers.registry import get_provider
 
+from homeassistant.helpers import config_validation as cv
+
+CONFIG_SCHEMA = cv.empty_config_schema
+
 type SwissDynamicTariffsConfigEntry = ConfigEntry[SwissDynamicTariffsCoordinator]
 
 

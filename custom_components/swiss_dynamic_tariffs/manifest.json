@@ -1,12 +1,12 @@
 {
   "domain": "swiss_dynamic_tariffs",
   "name": "Swiss Dynamic Tariffs",
-  "version": "0.1.0",
-  "documentation": "https://github.com/ehnid/swiss-dynamic-tariffs",
-  "issue_tracker": "https://github.com/ehnid/swiss-dynamic-tariffs/issues",
+  "codeowners": ["@ehnid"],
   "config_flow": true,
   "dependencies": [],
+  "documentation": "https://github.com/ehnid/swiss-dynamic-tariffs",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/ehnid/swiss-dynamic-tariffs/issues",
   "requirements": [],
-  "codeowners": ["@ehnid"],
-  "iot_class": "cloud_polling"
+  "version": "0.1.0"
 }

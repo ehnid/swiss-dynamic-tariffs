@@ -33,18 +33,22 @@ async def async_setup_entry(
         [
             SwissDynamicTariffSensor(
                 coordinator,
+                entry,
                 "electricity",
             ),
             SwissDynamicTariffSensor(
                 coordinator,
+                entry,
                 "feed_in",
             ),
             SwissDynamicTariffSensor(
                 coordinator,
+                entry,
                 "grid",
             ),
             SwissDynamicTariffSensor(
                 coordinator,
+                entry,
                 "integrated",
             ),
         ]
@@ -60,11 +64,15 @@ class SwissDynamicTariffSensor(
     def __init__(
         self,
         coordinator: SwissDynamicTariffsCoordinator,
+        config_entry,
         tariff_type: TariffType,
     ) -> None:
         """Initialize sensor."""
 
-        super().__init__(coordinator)
+        super().__init__(
+            coordinator,
+            config_entry,
+        )
 
         self._tariff_type = tariff_type
 

@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 
@@ -25,8 +26,12 @@ class FakeCoordinator:
 async def test_sensor_value():
     """Test sensor returns tariff value."""
 
+    entry = Mock()
+    entry.entry_id = "test"
+
     sensor = SwissDynamicTariffSensor(
         FakeCoordinator(),
+        entry,
         "electricity",
     )
 
@@ -37,8 +42,12 @@ def test_sensor_without_data():
     coordinator = FakeCoordinator()
     coordinator.data = []
 
+    entry = Mock()
+    entry.entry_id = "test"
+
     sensor = SwissDynamicTariffSensor(
         coordinator,
+        entry,
         "electricity",
     )
 
