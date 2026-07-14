@@ -6,6 +6,9 @@ on:
       - main
       - master
 
+permissions:
+  issues: write
+
 jobs:
   labeler:
     name: Labeler
