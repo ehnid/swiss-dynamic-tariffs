@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+
 from datetime import timedelta
 import logging
 
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
 
-from homeassistant.config_entries import ConfigEntry
 
-from .const import DEFAULT_SCAN_INTERVAL
+from .const import DEFAULT_SCAN_INTERVAL, NAME
 from .models import TariffPeriod
 from .providers.base import TariffProvider
 
@@ -29,7 +30,7 @@ class SwissDynamicTariffsCoordinator(
         self,
         hass: HomeAssistant,
         provider: TariffProvider,
-        entry: ConfigEntry | None = None,
+        entry: ConfigEntry,
     ) -> None:
         """Initialize the coordinator."""
         self.provider = provider
@@ -37,7 +38,7 @@ class SwissDynamicTariffsCoordinator(
         super().__init__(
             hass,
             _LOGGER,
-            name="Swiss Dynamic Tariffs",
+            name=NAME,
             update_interval=timedelta(
                 seconds=DEFAULT_SCAN_INTERVAL,
             ),
@@ -51,4 +52,5 @@ class SwissDynamicTariffsCoordinator(
         try:
             return await self.provider.async_get_tariffs()
         except Exception as err:
+            _LOGGER.exception("Unable to fetch tariff data.")
             raise UpdateFailed(f"Unable to fetch tariffs: {err}") from err

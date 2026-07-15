@@ -2,19 +2,21 @@
 
 from __future__ import annotations
 
-from .const import DOMAIN
-from .coordinator import SwissDynamicTariffsCoordinator
-
-from .entity import SwissDynamicTariffsEntity
-
-from typing import Literal
-
 from dataclasses import dataclass
+from typing import Literal
 
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
 )
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .const import CURRENCY_PER_KWH, DOMAIN
+from .coordinator import SwissDynamicTariffsCoordinator
+from .entity import SwissDynamicTariffsEntity
 
 TariffType = Literal[
     "electricity",
@@ -28,45 +30,49 @@ TariffType = Literal[
 class TariffSensorDescription(SensorEntityDescription):
     """Description of a tariff sensor."""
 
-    tariff_type: str
+    tariff_type: TariffType
 
 
-SENSORS: tuple[TariffSensorDescription, ...] = (
+ENTITY_DESCRIPTIONS: tuple[TariffSensorDescription, ...] = (
     TariffSensorDescription(
         key="electricity",
         name="Electricity",
         tariff_type="electricity",
-        native_unit_of_measurement="CHF/kWh",
+        native_unit_of_measurement=CURRENCY_PER_KWH,
         icon="mdi:flash",
+        suggested_display_precision=4,
     ),
     TariffSensorDescription(
         key="feed_in",
         name="Feed-in",
         tariff_type="feed_in",
-        native_unit_of_measurement="CHF/kWh",
+        native_unit_of_measurement=CURRENCY_PER_KWH,
         icon="mdi:transmission-tower-export",
+        suggested_display_precision=4,
     ),
     TariffSensorDescription(
         key="grid",
         name="Grid",
         tariff_type="grid",
-        native_unit_of_measurement="CHF/kWh",
+        native_unit_of_measurement=CURRENCY_PER_KWH,
         icon="mdi:transmission-tower",
+        suggested_display_precision=4,
     ),
     TariffSensorDescription(
         key="integrated",
         name="Integrated",
         tariff_type="integrated",
-        native_unit_of_measurement="CHF/kWh",
+        native_unit_of_measurement=CURRENCY_PER_KWH,
         icon="mdi:sigma",
+        suggested_display_precision=4,
     ),
 )
 
 
 async def async_setup_entry(
-    hass,
-    entry,
-    async_add_entities,
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up tariff sensors."""
 
@@ -78,7 +84,7 @@ async def async_setup_entry(
             entry,
             description,
         )
-        for description in SENSORS
+        for description in ENTITY_DESCRIPTIONS
     )
 
 
@@ -109,8 +115,6 @@ class SwissDynamicTariffSensor(
 
         self._attr_has_entity_name = True
 
-        self._attr_native_unit_of_measurement = "CHF/kWh"
-
     # @property
     # def extra_state_attributes(self):
     #     """Return tariff metadata."""
@@ -130,8 +134,8 @@ class SwissDynamicTariffSensor(
     #     )
 
     @property
-    def native_value(self):
-        """Return current tariff."""
+    def native_value(self) -> float | None:
+        """Return the current tariff."""
 
         if not self.coordinator.data:
             return None

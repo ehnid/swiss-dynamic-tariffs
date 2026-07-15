@@ -14,6 +14,8 @@ DEFAULT_SCAN_INTERVAL: Final = 900
 
 PLATFORMS: list[str] = []
 
+CURRENCY_PER_KWH = "CHF/kWh"
+
 
 # Configuration keys
 
