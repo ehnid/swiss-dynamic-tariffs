@@ -5,6 +5,7 @@ import pytest
 
 from custom_components.swiss_dynamic_tariffs.sensor import (
     SwissDynamicTariffSensor,
+    TariffSensorDescription,
 )
 
 
@@ -29,10 +30,17 @@ async def test_sensor_value():
     entry = Mock()
     entry.entry_id = "test"
 
+    description = TariffSensorDescription(
+        key="electricity",
+        name="Electricity",
+        tariff_type="electricity",
+        native_unit_of_measurement="CHF/kWh",
+    )
+
     sensor = SwissDynamicTariffSensor(
         FakeCoordinator(),
         entry,
-        "electricity",
+        description,
     )
 
     assert sensor.native_value == 0.25
@@ -45,10 +53,17 @@ def test_sensor_without_data():
     entry = Mock()
     entry.entry_id = "test"
 
+    description = TariffSensorDescription(
+        key="electricity",
+        name="Electricity",
+        tariff_type="electricity",
+        native_unit_of_measurement="CHF/kWh",
+    )
+
     sensor = SwissDynamicTariffSensor(
         coordinator,
         entry,
-        "electricity",
+        description,
     )
 
     assert sensor.native_value is None
