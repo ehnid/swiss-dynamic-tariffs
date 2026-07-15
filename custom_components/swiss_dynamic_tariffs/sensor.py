@@ -31,6 +31,7 @@ class TariffSensorDescription(SensorEntityDescription):
     """Description of a tariff sensor."""
 
     tariff_type: TariffType
+    suggested_display_precision: int = 4
 
 
 ENTITY_DESCRIPTIONS: tuple[TariffSensorDescription, ...] = (
@@ -78,14 +79,16 @@ async def async_setup_entry(
 
     coordinator: SwissDynamicTariffsCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    async_add_entities(
+    entities = [
         SwissDynamicTariffSensor(
             coordinator,
             entry,
             description,
         )
         for description in ENTITY_DESCRIPTIONS
-    )
+    ]
+
+    async_add_entities(entities)
 
 
 class SwissDynamicTariffSensor(
@@ -137,13 +140,27 @@ class SwissDynamicTariffSensor(
     def native_value(self) -> float | None:
         """Return the current tariff."""
 
-        if not self.coordinator.data:
-            return None
+        tariff = self.coordinator.current_period
 
-        tariff = self.coordinator.data[0]
+        if tariff is None:
+            return None
 
         return getattr(
             tariff,
             self.entity_description.tariff_type,
             None,
         )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object] | None:
+        """Return additional tariff information."""
+
+        tariff = self.coordinator.current_period
+
+        if tariff is None:
+            return None
+
+        return {
+            "start": tariff.start,
+            "end": tariff.end,
+        }

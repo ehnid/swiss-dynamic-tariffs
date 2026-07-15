@@ -4,8 +4,12 @@ from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
 
-from datetime import timedelta
+from datetime import (
+    timedelta,
+)
+
 import logging
 
 from homeassistant.helpers.update_coordinator import (
@@ -54,3 +58,18 @@ class SwissDynamicTariffsCoordinator(
         except Exception as err:
             _LOGGER.exception("Unable to fetch tariff data.")
             raise UpdateFailed(f"Unable to fetch tariffs: {err}") from err
+
+    @property
+    def current_period(self) -> TariffPeriod | None:
+        """Return the currently active tariff period."""
+
+        if not self.data:
+            return None
+
+        now = dt_util.now()
+
+        for period in self.data:
+            if period.start <= now < period.end:
+                return period
+
+        return None
