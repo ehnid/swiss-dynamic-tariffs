@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Swiss Dynamic Tariffs",
+        "description": "Select your tariff provider",
+        "data": {
+          "provider": "Provider"
+        }
+      }
+    }
+  }
+}

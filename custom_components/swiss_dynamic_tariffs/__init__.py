@@ -11,9 +11,9 @@ from .const import DOMAIN, PLATFORMS
 from .coordinator import SwissDynamicTariffsCoordinator
 from .providers.registry import get_provider
 
-from homeassistant.helpers import config_validation as cv
+import voluptuous as cv
 
-CONFIG_SCHEMA = cv.empty_config_schema
+CONFIG_SCHEMA = cv.Schema({})
 
 type SwissDynamicTariffsConfigEntry = ConfigEntry[SwissDynamicTariffsCoordinator]
 
@@ -75,9 +75,15 @@ async def async_unload_entry(
 ) -> bool:
     """Unload a config entry."""
 
-    hass.data[DOMAIN].pop(
-        entry.entry_id,
-        None,
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        entry,
+        PLATFORMS,
     )
 
-    return True
+    if unload_ok:
+        hass.data[DOMAIN].pop(
+            entry.entry_id,
+            None,
+        )
+
+    return unload_ok

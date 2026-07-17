@@ -1,0 +1,23 @@
+import pytest
+
+from custom_components.swiss_dynamic_tariffs.const import DOMAIN
+
+
+@pytest.mark.asyncio
+async def test_config_flow_single_step(hass):
+    """Test provider selection flow."""
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={
+            "source": "user",
+        },
+        data={
+            "provider": "bkw",
+        },
+    )
+
+    assert result["type"] == "create_entry"
+    assert result["data"] == {
+        "provider": "bkw",
+    }

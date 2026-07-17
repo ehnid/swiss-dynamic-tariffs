@@ -4,7 +4,15 @@ from unittest.mock import patch
 
 import pytest
 
-pytest_plugins = "pytest_homeassistant_custom_component"
+pytest_plugins = [
+    "pytest_homeassistant_custom_component",
+]
+
+
+@pytest.fixture(autouse=True)
+def enable_custom_integrations(enable_custom_integrations):
+    """Enable custom integrations."""
+    return
 
 
 # This fixture is used to prevent HomeAssistant from attempting to create and dismiss persistent
