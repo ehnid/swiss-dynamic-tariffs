@@ -118,24 +118,6 @@ class SwissDynamicTariffSensor(
 
         self._attr_has_entity_name = True
 
-    # @property
-    # def extra_state_attributes(self):
-    #     """Return tariff metadata."""
-
-    #     if not isinstance(self.coordinator.data, list):
-    #         return None
-
-    #     if not self.coordinator.data:
-    #         return None
-
-    #     tariff = self.coordinator.data[0]
-
-    #     return getattr(
-    #         tariff,
-    #         self._tariff_type,
-    #         None,
-    #     )
-
     @property
     def native_value(self) -> float | None:
         """Return the current tariff."""

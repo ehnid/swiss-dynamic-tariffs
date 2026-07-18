@@ -53,15 +53,17 @@ class SwissDynamicTariffsCoordinator(
         self,
     ) -> list[TariffPeriod]:
         """Fetch data from the configured provider."""
+        _LOGGER.debug("Fetching tariff data")
+
         try:
-            return await self.provider.async_get_tariffs()
+            data = await self.provider.async_get_tariffs()
         except Exception as err:
             _LOGGER.exception("Unable to fetch tariff data.")
             raise UpdateFailed(f"Unable to fetch tariffs: {err}") from err
 
-        _LOGGER.debug("Fetching tariff data")
-        data = await self.provider.async_get_tariffs()
         _LOGGER.debug("Received tariff data: %s", data)
+
+        return data
 
     @property
     def current_period(self) -> TariffPeriod | None:

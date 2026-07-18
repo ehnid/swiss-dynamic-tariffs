@@ -3,29 +3,14 @@
     "step": {
       "user": {
         "title": "Swiss Dynamic Tariffs",
-        "description": "Hvis du trenger hjep til konfigurasjon ta en titt her: https://github.com/ehnid/swiss-dynamic-tariffs-template",
+        "description": "Velg din tariffleverandør",
         "data": {
-          "username": "Brukernavn",
-          "password": "Passord"
+          "provider": "Leverandør"
         }
       }
-    },
-    "error": {
-      "auth": "Brukernavn/Passord er feil."
     },
     "abort": {
-      "single_instance_allowed": "Denne integrasjonen kan kun konfigureres en gang."
-    }
-  },
-  "options": {
-    "step": {
-      "user": {
-        "data": {
-          "binary_sensor": "Binær sensor aktivert",
-          "sensor": "Sensor aktivert",
-          "switch": "Bryter aktivert"
-        }
-      }
+      "already_configured": "Denne leverandøren er allerede konfigurert."
     }
   }
 }

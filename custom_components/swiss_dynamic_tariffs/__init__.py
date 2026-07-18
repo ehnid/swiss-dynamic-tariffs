@@ -11,9 +11,9 @@ from .const import DOMAIN, PLATFORMS
 from .coordinator import SwissDynamicTariffsCoordinator
 from .providers.registry import get_provider
 
-import voluptuous as cv
+import voluptuous as vol
 
-CONFIG_SCHEMA = cv.Schema({})
+CONFIG_SCHEMA = vol.Schema({})
 
 type SwissDynamicTariffsConfigEntry = ConfigEntry[SwissDynamicTariffsCoordinator]
 

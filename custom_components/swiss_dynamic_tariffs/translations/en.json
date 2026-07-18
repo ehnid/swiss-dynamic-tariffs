@@ -3,29 +3,14 @@
     "step": {
       "user": {
         "title": "Swiss Dynamic Tariffs",
-        "description": "Configure the BKW Dynamic Tariffs integration.",
+        "description": "Select your tariff provider",
         "data": {
-          "username": "Username",
-          "password": "Password"
+          "provider": "Provider"
         }
       }
-    },
-    "error": {
-      "auth": "Username/Password is wrong."
     },
     "abort": {
-      "single_instance_allowed": "Only a single instance is allowed."
-    }
-  },
-  "options": {
-    "step": {
-      "user": {
-        "data": {
-          "binary_sensor": "Binary sensor enabled",
-          "sensor": "Sensor enabled",
-          "switch": "Switch enabled"
-        }
-      }
+      "already_configured": "This provider is already configured."
     }
   }
 }
