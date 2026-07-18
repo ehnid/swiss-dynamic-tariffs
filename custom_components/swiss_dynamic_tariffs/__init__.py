@@ -37,16 +37,11 @@ async def async_setup_entry(
 
     provider_name = entry.data.get("provider", "bkw")
 
-    if not isinstance(provider_name, str):
-        provider_name = "bkw"
-
     provider_class = get_provider(provider_name)
 
     session = async_get_clientsession(hass)
 
-    provider = provider_class(
-        session,
-    )
+    provider = provider_class(session)
 
     coordinator = SwissDynamicTariffsCoordinator(
         hass,
@@ -54,10 +49,10 @@ async def async_setup_entry(
         entry,
     )
 
-    await coordinator.async_refresh()
-
-    if not coordinator.last_update_success:
-        raise ConfigEntryNotReady
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except Exception as err:
+        raise ConfigEntryNotReady(f"Initial tariff fetch failed: {err}") from err
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 

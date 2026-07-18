@@ -1,5 +1,6 @@
 from custom_components import swiss_dynamic_tariffs
 from custom_components.swiss_dynamic_tariffs.const import DOMAIN
+from homeassistant.config_entries import ConfigEntryState
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -12,6 +13,7 @@ async def test_setup_entry(hass):
     entry = Mock()
     entry.entry_id = "test"
     entry.domain = "swiss_dynamic_tariffs"
+    entry.state = ConfigEntryState.SETUP_IN_PROGRESS
     entry.data = {
         "provider": "bkw",
     }
