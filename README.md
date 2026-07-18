@@ -20,6 +20,32 @@
 | -------- | ----------------------------------------------------------- |
 | `sensor` | Current, next, min/max and average tariff values (CHF/kWh). |
 
+Currently supported providers:
+
+| Provider | Status      |
+| -------- | ----------- |
+| BKW      | Implemented |
+| CKW      | Planned     |
+| Groupe E | Planned     |
+| Custom   | Planned     |
+
+For every price component a provider reports (consumption, feed-in,
+grid usage, and any all-in/"integrated" price), five sensors are
+created:
+
+| Sensor                      | Meaning                                                |
+| --------------------------- | ------------------------------------------------------ |
+| Current                     | Price of the currently active quarter hour.            |
+| Next                        | Price of the quarter hour right after the current one. |
+| Cheapest Quarter Hour       | Lowest upcoming price and when it occurs.              |
+| Most Expensive Quarter Hour | Highest upcoming price and when it occurs.             |
+| Average                     | Average price across all known upcoming quarter hours. |
+
+"Cheapest" and "most expensive" are computed over every quarter hour
+the provider has already published that hasn't ended yet - this
+covers the rest of today plus tomorrow once a provider publishes
+next-day prices (as BKW does in the early afternoon).
+
 ![example][exampleimg]
 
 ## Installation

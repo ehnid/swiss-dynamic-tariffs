@@ -79,3 +79,72 @@ class SwissDynamicTariffsCoordinator(
                 return period
 
         return None
+
+    @property
+    def next_period(self) -> TariffPeriod | None:
+        """Return the tariff period directly following the current one."""
+
+        upcoming = self._upcoming_periods()
+
+        if not upcoming:
+            return None
+
+        return min(upcoming, key=lambda period: period.start)
+
+    def cheapest_period(self, tariff_type: str) -> TariffPeriod | None:
+        """Return the upcoming quarter-hour with the lowest price for a tariff type."""
+
+        candidates = self._periods_with_value(tariff_type)
+
+        if not candidates:
+            return None
+
+        return min(candidates, key=lambda period: getattr(period, tariff_type))
+
+    def most_expensive_period(self, tariff_type: str) -> TariffPeriod | None:
+        """Return the upcoming quarter-hour with the highest price for a tariff type."""
+
+        candidates = self._periods_with_value(tariff_type)
+
+        if not candidates:
+            return None
+
+        return max(candidates, key=lambda period: getattr(period, tariff_type))
+
+    def average_price(self, tariff_type: str) -> float | None:
+        """Return the average upcoming price for a tariff type."""
+
+        values = [
+            getattr(period, tariff_type)
+            for period in self._periods_with_value(tariff_type)
+        ]
+
+        if not values:
+            return None
+
+        return sum(values) / len(values)
+
+    def _upcoming_periods(self) -> list[TariffPeriod]:
+        """Return periods that are still active or lie in the future.
+
+        This covers the remainder of today plus tomorrow once the provider
+        has published the next day's prices, which is what "cheapest" and
+        "most expensive" should be computed over - a period that has
+        already ended is no longer actionable.
+        """
+
+        if not self.data:
+            return []
+
+        now = dt_util.now()
+
+        return [period for period in self.data if period.end > now]
+
+    def _periods_with_value(self, tariff_type: str) -> list[TariffPeriod]:
+        """Return upcoming periods that have a value for the given tariff type."""
+
+        return [
+            period
+            for period in self._upcoming_periods()
+            if getattr(period, tariff_type, None) is not None
+        ]

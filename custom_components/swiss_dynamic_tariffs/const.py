@@ -6,7 +6,7 @@ DOMAIN: Final = "swiss_dynamic_tariffs"
 
 NAME: Final = "Swiss Dynamic Tariffs"
 
-VERSION: Final = "0.1.0"
+VERSION: Final = "0.2.0"
 
 ATTRIBUTION = "Data provided by BKW"
 
