@@ -138,9 +138,7 @@ class SwissDynamicTariffSensor(
 
         self.entity_description = description
 
-        self._attr_unique_id = (
-            f"{DOMAIN}_{self.config_entry.entry_id}_{description.key}"
-        )
+        self._attr_unique_id = f"{DOMAIN}_{self._entry.entry_id}_{description.key}"
 
         self._attr_has_entity_name = True
 
