@@ -15,3 +15,11 @@ class TariffProvider(ABC):
         self,
     ) -> list[TariffPeriod]:
         """Return tariff periods."""
+
+    @staticmethod
+    def validate_periods(
+        periods: list[TariffPeriod],
+    ) -> list[TariffPeriod]:
+        """Validate returned tariff periods."""
+
+        return [period for period in periods if period.start < period.end]

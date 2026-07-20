@@ -36,7 +36,7 @@ class BKWProvider(TariffProvider):
 
             data = await response.json()
 
-        return parse_tariffs(data)
+        return self.validate_periods(parse_tariffs(data))
 
 
 def _parse_price_component(

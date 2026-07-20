@@ -12,7 +12,9 @@ ATTRIBUTION = "Data provided by BKW"
 
 DEFAULT_SCAN_INTERVAL: Final = 900
 
-PLATFORMS: list[str] = []
+PLATFORMS: list[str] = ["sensor"]
+
+CURRENCY_PER_KWH = "CHF/kWh"
 
 
 # Configuration keys

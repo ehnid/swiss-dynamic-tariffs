@@ -5,15 +5,14 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN, PLATFORMS
 from .coordinator import SwissDynamicTariffsCoordinator
 from .providers.registry import get_provider
 
-from homeassistant.helpers import config_validation as cv
-
-CONFIG_SCHEMA = cv.empty_config_schema
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 type SwissDynamicTariffsConfigEntry = ConfigEntry[SwissDynamicTariffsCoordinator]
 
@@ -37,16 +36,11 @@ async def async_setup_entry(
 
     provider_name = entry.data.get("provider", "bkw")
 
-    if not isinstance(provider_name, str):
-        provider_name = "bkw"
-
     provider_class = get_provider(provider_name)
 
     session = async_get_clientsession(hass)
 
-    provider = provider_class(
-        session,
-    )
+    provider = provider_class(session)
 
     coordinator = SwissDynamicTariffsCoordinator(
         hass,
@@ -54,10 +48,10 @@ async def async_setup_entry(
         entry,
     )
 
-    await coordinator.async_refresh()
-
-    if not coordinator.last_update_success:
-        raise ConfigEntryNotReady
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except Exception as err:
+        raise ConfigEntryNotReady(f"Initial tariff fetch failed: {err}") from err
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
@@ -75,9 +69,15 @@ async def async_unload_entry(
 ) -> bool:
     """Unload a config entry."""
 
-    hass.data[DOMAIN].pop(
-        entry.entry_id,
-        None,
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        entry,
+        PLATFORMS,
     )
 
-    return True
+    if unload_ok:
+        hass.data[DOMAIN].pop(
+            entry.entry_id,
+            None,
+        )
+
+    return unload_ok

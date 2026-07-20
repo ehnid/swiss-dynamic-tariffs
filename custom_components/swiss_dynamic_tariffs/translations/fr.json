@@ -3,29 +3,14 @@
     "step": {
       "user": {
         "title": "Swiss Dynamic Tariffs",
-        "description": "Si vous avez besoin d'aide pour la configuration, regardez ici: https://github.com/ehnid/swiss-dynamic-tariffs-template",
+        "description": "Sélectionnez votre fournisseur de tarifs",
         "data": {
-          "username": "Identifiant",
-          "password": "Mot de Passe"
+          "provider": "Fournisseur"
         }
       }
-    },
-    "error": {
-      "auth": "Identifiant ou mot de passe erroné."
     },
     "abort": {
-      "single_instance_allowed": "Une seule instance est autorisée."
-    }
-  },
-  "options": {
-    "step": {
-      "user": {
-        "data": {
-          "binary_sensor": "Capteur binaire activé",
-          "sensor": "Capteur activé",
-          "switch": "Interrupteur activé"
-        }
-      }
+      "already_configured": "Ce fournisseur est déjà configuré."
     }
   }
 }

@@ -1,3 +1,6 @@
+from custom_components import swiss_dynamic_tariffs
+from custom_components.swiss_dynamic_tariffs.const import DOMAIN
+from homeassistant.config_entries import ConfigEntryState
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -10,6 +13,7 @@ async def test_setup_entry(hass):
     entry = Mock()
     entry.entry_id = "test"
     entry.domain = "swiss_dynamic_tariffs"
+    entry.state = ConfigEntryState.SETUP_IN_PROGRESS
     entry.data = {
         "provider": "bkw",
     }
@@ -32,3 +36,28 @@ async def test_setup_entry(hass):
         )
 
     assert result is True
+
+
+@pytest.mark.asyncio
+async def test_unload_entry(hass):
+    """Test config entry unload."""
+
+    entry = Mock()
+    entry.entry_id = "test"
+
+    hass.data[DOMAIN] = {
+        "test": Mock(),
+    }
+
+    with patch(
+        "homeassistant.config_entries.ConfigEntries.async_unload_platforms",
+        new=AsyncMock(return_value=True),
+    ) as unload:
+        result = await swiss_dynamic_tariffs.async_unload_entry(
+            hass,
+            entry,
+        )
+
+    assert result is True
+    assert "test" not in hass.data[DOMAIN]
+    unload.assert_called_once()

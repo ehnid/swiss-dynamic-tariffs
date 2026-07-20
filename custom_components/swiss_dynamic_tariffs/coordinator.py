@@ -2,18 +2,23 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
+
+from datetime import (
+    timedelta,
+)
+
 import logging
 
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
 
-from homeassistant.config_entries import ConfigEntry
 
-from .const import DEFAULT_SCAN_INTERVAL
+from .const import DEFAULT_SCAN_INTERVAL, NAME
 from .models import TariffPeriod
 from .providers.base import TariffProvider
 
@@ -29,7 +34,7 @@ class SwissDynamicTariffsCoordinator(
         self,
         hass: HomeAssistant,
         provider: TariffProvider,
-        entry: ConfigEntry | None = None,
+        entry: ConfigEntry,
     ) -> None:
         """Initialize the coordinator."""
         self.provider = provider
@@ -37,7 +42,7 @@ class SwissDynamicTariffsCoordinator(
         super().__init__(
             hass,
             _LOGGER,
-            name="Swiss Dynamic Tariffs",
+            name=NAME,
             update_interval=timedelta(
                 seconds=DEFAULT_SCAN_INTERVAL,
             ),
@@ -48,7 +53,98 @@ class SwissDynamicTariffsCoordinator(
         self,
     ) -> list[TariffPeriod]:
         """Fetch data from the configured provider."""
+        _LOGGER.debug("Fetching tariff data")
+
         try:
-            return await self.provider.async_get_tariffs()
+            data = await self.provider.async_get_tariffs()
         except Exception as err:
+            _LOGGER.exception("Unable to fetch tariff data.")
             raise UpdateFailed(f"Unable to fetch tariffs: {err}") from err
+
+        _LOGGER.debug("Received tariff data: %s", data)
+
+        return data
+
+    @property
+    def current_period(self) -> TariffPeriod | None:
+        """Return the currently active tariff period."""
+
+        if not self.data:
+            return None
+
+        now = dt_util.now()
+
+        for period in self.data:
+            if period.start <= now < period.end:
+                return period
+
+        return None
+
+    @property
+    def next_period(self) -> TariffPeriod | None:
+        """Return the tariff period directly following the current one."""
+
+        upcoming = self._upcoming_periods()
+
+        if not upcoming:
+            return None
+
+        return min(upcoming, key=lambda period: period.start)
+
+    def cheapest_period(self, tariff_type: str) -> TariffPeriod | None:
+        """Return the upcoming quarter-hour with the lowest price for a tariff type."""
+
+        candidates = self._periods_with_value(tariff_type)
+
+        if not candidates:
+            return None
+
+        return min(candidates, key=lambda period: getattr(period, tariff_type))
+
+    def most_expensive_period(self, tariff_type: str) -> TariffPeriod | None:
+        """Return the upcoming quarter-hour with the highest price for a tariff type."""
+
+        candidates = self._periods_with_value(tariff_type)
+
+        if not candidates:
+            return None
+
+        return max(candidates, key=lambda period: getattr(period, tariff_type))
+
+    def average_price(self, tariff_type: str) -> float | None:
+        """Return the average upcoming price for a tariff type."""
+
+        values = [
+            getattr(period, tariff_type)
+            for period in self._periods_with_value(tariff_type)
+        ]
+
+        if not values:
+            return None
+
+        return sum(values) / len(values)
+
+    def _upcoming_periods(self) -> list[TariffPeriod]:
+        """Return periods that are still active or lie in the future.
+
+        This covers the remainder of today plus tomorrow once the provider
+        has published the next day's prices, which is what "cheapest" and
+        "most expensive" should be computed over - a period that has
+        already ended is no longer actionable.
+        """
+
+        if not self.data:
+            return []
+
+        now = dt_util.now()
+
+        return [period for period in self.data if period.end > now]
+
+    def _periods_with_value(self, tariff_type: str) -> list[TariffPeriod]:
+        """Return upcoming periods that have a value for the given tariff type."""
+
+        return [
+            period
+            for period in self._upcoming_periods()
+            if getattr(period, tariff_type, None) is not None
+        ]
