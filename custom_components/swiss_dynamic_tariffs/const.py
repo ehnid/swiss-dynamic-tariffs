@@ -6,7 +6,7 @@ DOMAIN: Final = "swiss_dynamic_tariffs"
 
 NAME: Final = "Swiss Dynamic Tariffs"
 
-VERSION: Final = "0.1.0"
+VERSION: Final = "0.2.0"
 
 DEFAULT_SCAN_INTERVAL: Final = 900
 REQUEST_TIMEOUT: Final = 30
@@ -19,6 +19,7 @@ CURRENCY_PER_KWH = "CHF/kWh"
 # Configuration keys
 
 CONF_PROVIDER: Final = "provider"
+CONF_TARIFF: Final = "tariff"
 CONF_API_URL: Final = "api_url"
 CONF_API_KEY: Final = "api_key"
 
@@ -27,11 +28,17 @@ CONF_API_KEY: Final = "api_key"
 
 PROVIDER_BKW: Final = "bkw"
 PROVIDER_CKW: Final = "ckw"
+PROVIDER_EKZ: Final = "ekz"
+PROVIDER_GROUPE_E: Final = "groupe_e"
+PROVIDER_PRIMEO: Final = "primeo"
 BKW_API_URL: Final = "https://api.bkw.ch/api/dyntariffs/v1/tariffs/"
 CKW_API_URL: Final = (
     "https://e-ckw-public-data.de-c1.eu1.cloudhub.io/api/v1/"
     "netzinformationen/energie/dynamische-preise"
 )
+EKZ_API_URL: Final = "https://api.tariffs.ekz.ch/v1/tariffs"
+GROUPE_E_API_URL: Final = "https://api.tariffs.groupe-e.ch/v2/tariffs/"
+PRIMEO_API_URL: Final = "https://tarife.primeo-energie.ch/api/v1/tariffs"
 
 # Sensor types
 

@@ -3,14 +3,14 @@
     "step": {
       "user": {
         "title": "Swiss Dynamic Tariffs",
-        "description": "Velg din tariffleverandør",
+        "description": "Velg strømleverandør og tariff",
         "data": {
-          "provider": "Leverandør"
+          "provider": "Leverandør og tariff"
         }
       }
     },
     "abort": {
-      "already_configured": "Denne leverandøren er allerede konfigurert."
+      "already_configured": "Denne leverandøren og tariffen er allerede konfigurert."
     }
   }
 }

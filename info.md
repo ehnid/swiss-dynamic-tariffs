@@ -15,12 +15,18 @@
 | -------- | ----------------------------------------------------------- |
 | `sensor` | Current, next, min/max and average tariff values (CHF/kWh). |
 
-Supported providers:
+Supported provider/tariff combinations:
 
-| Provider | Tariffs                              |
-| -------- | ------------------------------------ |
-| BKW      | Dynamic feed-in tariff               |
-| CKW      | `home_dynamic` electricity and grid |
+| Provider       | Tariffs                                                   |
+| -------------- | --------------------------------------------------------- |
+| BKW            | `feed_in`                                                 |
+| CKW            | `home_dynamic`, `business_dynamic`                        |
+| Groupe E       | `VARIO`                                                   |
+| Primeo Energie | `NetzDynamisch`, `NetzDynamischAVAG`, `NetzDynamischELAG` |
+| EKZ            | `integrated_400D`, `integrated_400D_E` (Einsiedeln)       |
+
+Every tariff is available as its own option in the configuration flow, so
+more than one tariff from the same provider can be configured.
 
 ![example][exampleimg]
 

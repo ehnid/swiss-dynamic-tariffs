@@ -8,9 +8,15 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, PLATFORMS
+from .const import (
+    CONF_PROVIDER,
+    CONF_TARIFF,
+    DOMAIN,
+    PLATFORMS,
+    PROVIDER_BKW,
+)
 from .coordinator import SwissDynamicTariffsCoordinator
-from .providers.registry import get_provider
+from .providers.registry import create_provider
 
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
@@ -34,13 +40,12 @@ async def async_setup_entry(
 
     hass.data.setdefault(DOMAIN, {})
 
-    provider_name = entry.data.get("provider", "bkw")
-
-    provider_class = get_provider(provider_name)
+    provider_name = entry.data.get(CONF_PROVIDER, PROVIDER_BKW)
+    tariff_name = entry.data.get(CONF_TARIFF)
 
     session = async_get_clientsession(hass)
 
-    provider = provider_class(session)
+    provider = create_provider(provider_name, session, tariff_name)
 
     coordinator = SwissDynamicTariffsCoordinator(
         hass,

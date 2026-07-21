@@ -3,14 +3,14 @@
     "step": {
       "user": {
         "title": "Swiss Dynamic Tariffs",
-        "description": "Select your tariff provider",
+        "description": "Select your energy provider and tariff",
         "data": {
-          "provider": "Provider"
+          "provider": "Provider and tariff"
         }
       }
     },
     "abort": {
-      "already_configured": "This provider is already configured."
+      "already_configured": "This provider and tariff are already configured."
     }
   }
 }

@@ -1,8 +1,8 @@
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow
 
-from .const import CONF_PROVIDER, DOMAIN
-from .providers.registry import PROVIDERS
+from .const import CONF_PROVIDER, CONF_TARIFF, DOMAIN
+from .providers.registry import TARIFF_OPTIONS, get_tariff_option
 
 
 class SwissDynamicTariffsConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -15,17 +15,18 @@ class SwissDynamicTariffsConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the initial setup."""
 
         if user_input is not None:
-            provider = user_input[CONF_PROVIDER]
-            provider_class = PROVIDERS[provider]
+            selection = user_input[CONF_PROVIDER]
+            option = get_tariff_option(selection)
 
-            await self.async_set_unique_id(f"{DOMAIN}_{provider}")
+            await self.async_set_unique_id(f"{DOMAIN}_{option.key}")
 
             self._abort_if_unique_id_configured()
 
             return self.async_create_entry(
-                title=f"{provider_class.name} Dynamic Tariffs",
+                title=option.title,
                 data={
-                    CONF_PROVIDER: provider,
+                    CONF_PROVIDER: option.provider,
+                    CONF_TARIFF: option.tariff_name,
                 },
             )
 
@@ -34,7 +35,7 @@ class SwissDynamicTariffsConfigFlow(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_PROVIDER): vol.In(
-                        {key: provider.name for key, provider in PROVIDERS.items()}
+                        {key: option.title for key, option in TARIFF_OPTIONS.items()}
                     )
                 }
             ),

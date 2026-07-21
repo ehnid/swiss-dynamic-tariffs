@@ -10,19 +10,28 @@ from ..models import TariffPeriod, TariffType
 
 
 def _parse_price_component(data: object) -> float | None:
-    """Extract and validate the first CHF/kWh value from a component."""
+    """Extract and validate the CHF/kWh value from a component."""
 
     if data is None or data == []:
         return None
 
-    if not isinstance(data, list) or not isinstance(data[0], dict):
+    if not isinstance(data, list) or not all(
+        isinstance(component, dict) for component in data
+    ):
         raise ProviderDataError("Invalid price component")
 
-    component = data[0]
-    unit = component.get("unit")
+    component = next(
+        (
+            component
+            for component in data
+            if component.get("unit") in ("CHF_kWh", "CHF/kWh")
+        ),
+        None,
+    )
 
-    if unit not in ("CHF_kWh", "CHF/kWh"):
-        raise ProviderDataError(f"Unsupported price unit: {unit}")
+    if component is None:
+        units = ", ".join(str(item.get("unit")) for item in data)
+        raise ProviderDataError(f"Unsupported price unit(s): {units}")
 
     try:
         value = float(component["value"])

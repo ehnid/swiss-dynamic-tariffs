@@ -13,6 +13,7 @@ class TariffProvider(ABC):
 
     name: ClassVar[str] = "Dynamic tariffs"
     attribution: ClassVar[str] = ""
+    tariff_name: str | None = None
     supported_tariff_types: ClassVar[tuple[TariffType, ...]] = (
         "electricity",
         "feed_in",

@@ -3,14 +3,14 @@
     "step": {
       "user": {
         "title": "Dynamische Stromtarife Schweiz",
-        "description": "Wählen Sie Ihren Tarif-Anbieter aus.",
+        "description": "Wählen Sie Ihren Energieversorger und Tarif aus.",
         "data": {
-          "provider": "Anbieter"
+          "provider": "Anbieter und Tarif"
         }
       }
     },
     "abort": {
-      "already_configured": "Dieser Anbieter ist bereits konfiguriert."
+      "already_configured": "Dieser Anbieter und Tarif sind bereits konfiguriert."
     }
   }
 }

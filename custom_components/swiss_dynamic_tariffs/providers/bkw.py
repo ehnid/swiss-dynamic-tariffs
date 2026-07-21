@@ -24,10 +24,15 @@ class BKWProvider(TariffProvider):
     def __init__(
         self,
         session: ClientSession,
+        tariff_name: str | None = None,
     ) -> None:
         """Initialize BKW provider."""
 
+        if tariff_name not in (None, "feed_in"):
+            raise ValueError(f"Unsupported BKW tariff: {tariff_name}")
+
         self.session = session
+        self.tariff_name = "feed_in"
 
     async def async_get_tariffs(
         self,

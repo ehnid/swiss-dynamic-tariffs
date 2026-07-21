@@ -20,14 +20,23 @@
 | -------- | ----------------------------------------------------------- |
 | `sensor` | Current, next, min/max and average tariff values (CHF/kWh). |
 
-Currently supported providers:
+Currently selectable provider/tariff combinations:
 
-| Provider | Status                               |
-| -------- | ------------------------------------ |
-| BKW      | Implemented (dynamic feed-in tariff) |
-| CKW      | Implemented (`home_dynamic`)         |
-| Groupe E | Planned                              |
-| Custom   | Planned                              |
+| Provider       | Tariff              | Available price components                |
+| -------------- | ------------------- | ----------------------------------------- |
+| BKW            | `feed_in`           | Feed-in                                   |
+| CKW            | `home_dynamic`      | Electricity, grid usage, grid, integrated |
+| CKW            | `business_dynamic`  | Electricity, grid usage, grid, integrated |
+| Groupe E       | `VARIO`             | Grid, integrated                          |
+| Primeo Energie | `NetzDynamisch`     | Electricity, grid usage, grid, integrated |
+| Primeo Energie | `NetzDynamischAVAG` | Electricity, grid usage, grid, integrated |
+| Primeo Energie | `NetzDynamischELAG` | Electricity, grid usage, grid, integrated |
+| EKZ            | `integrated_400D`   | Integrated                                |
+| EKZ Einsiedeln | `integrated_400D_E` | Integrated                                |
+
+Each provider/tariff combination is a separate option in the configuration
+flow. Multiple tariffs from the same provider can therefore be added as
+separate integration entries.
 
 For every price component supported by the selected provider (consumption,
 feed-in, grid usage, or an all-in/"integrated" price), five sensors are
@@ -83,8 +92,12 @@ custom_components/swiss_dynamic_tariffs/providers/__init__.py
 custom_components/swiss_dynamic_tariffs/providers/base.py
 custom_components/swiss_dynamic_tariffs/providers/bkw.py
 custom_components/swiss_dynamic_tariffs/providers/ckw.py
+custom_components/swiss_dynamic_tariffs/providers/ekz.py
+custom_components/swiss_dynamic_tariffs/providers/groupe_e.py
 custom_components/swiss_dynamic_tariffs/providers/parser.py
+custom_components/swiss_dynamic_tariffs/providers/primeo.py
 custom_components/swiss_dynamic_tariffs/providers/registry.py
+custom_components/swiss_dynamic_tariffs/providers/standard.py
 ```
 
 ## Configuration is done in the UI

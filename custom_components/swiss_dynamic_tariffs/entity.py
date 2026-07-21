@@ -32,7 +32,7 @@ class SwissDynamicTariffsEntity(CoordinatorEntity[SwissDynamicTariffsCoordinator
         """Return device information."""
         return DeviceInfo(
             identifiers={(DOMAIN, self._entry.entry_id)},
-            name=NAME,
+            name=getattr(self._entry, "title", NAME),
             manufacturer=self.coordinator.provider.name,
             model="Dynamic tariffs",
             sw_version=VERSION,
