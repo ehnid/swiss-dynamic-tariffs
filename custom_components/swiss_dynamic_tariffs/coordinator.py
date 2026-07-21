@@ -158,6 +158,20 @@ class SwissDynamicTariffsCoordinator(
 
         return sum(values) / len(values)
 
+    def future_periods(self, tariff_type: str) -> list[TariffPeriod]:
+        """Return every future period containing the requested tariff value."""
+
+        if not self.data:
+            return []
+
+        now = dt_util.now()
+
+        return [
+            period
+            for period in self.data
+            if period.start > now and getattr(period, tariff_type, None) is not None
+        ]
+
     def _upcoming_periods(self) -> list[TariffPeriod]:
         """Return periods that are still active or lie in the future.
 

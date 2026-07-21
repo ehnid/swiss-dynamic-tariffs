@@ -1,4 +1,6 @@
 from datetime import datetime
+import json
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -83,6 +85,10 @@ class FakeCoordinator:
     def average_price(self, tariff_type):
         """Return a fake average price, ignoring the tariff type."""
         return 0.20
+
+    def future_periods(self, tariff_type):
+        """Return all fake future periods, ignoring the tariff type."""
+        return [self.next_period, self.cheapest, self.most_expensive]
 
 
 @pytest.mark.asyncio
@@ -182,6 +188,23 @@ def test_sensor_next_price():
 
     assert sensor.native_value == 0.40
     assert sensor.extra_state_attributes["start"] == FakeCoordinator.next_period.start
+    assert sensor.extra_state_attributes["future_prices"] == [
+        {
+            "start": FakeCoordinator.next_period.start.isoformat(),
+            "end": FakeCoordinator.next_period.end.isoformat(),
+            "price": 0.40,
+        },
+        {
+            "start": FakeCoordinator.cheapest.start.isoformat(),
+            "end": FakeCoordinator.cheapest.end.isoformat(),
+            "price": 0.05,
+        },
+        {
+            "start": FakeCoordinator.most_expensive.start.isoformat(),
+            "end": FakeCoordinator.most_expensive.end.isoformat(),
+            "price": 0.60,
+        },
+    ]
 
 
 def test_sensor_cheapest_quarter_hour():
@@ -280,6 +303,10 @@ def test_entity_descriptions_cover_all_tariff_types_and_kinds():
         SENSOR_AVERAGE_PRICE,
     }
     assert len(ENTITY_DESCRIPTIONS) == len(tariff_types) * len(kinds)
+    assert all(
+        description.translation_key == description.key
+        for description in ENTITY_DESCRIPTIONS
+    )
 
     current_descriptions = [
         description
@@ -290,6 +317,25 @@ def test_entity_descriptions_cover_all_tariff_types_and_kinds():
         description.state_class == SensorStateClass.MEASUREMENT
         for description in current_descriptions
     )
+
+
+@pytest.mark.parametrize("language", ["strings", "de", "en", "fr", "it"])
+def test_all_sensor_names_are_translated(language):
+    """Test that every generated sensor has a name in every supported language."""
+
+    integration_path = (
+        Path(__file__).parents[1] / "custom_components" / "swiss_dynamic_tariffs"
+    )
+    translation_path = (
+        integration_path / "strings.json"
+        if language == "strings"
+        else integration_path / "translations" / f"{language}.json"
+    )
+    translations = json.loads(translation_path.read_text(encoding="utf-8"))
+
+    assert set(translations["entity"]["sensor"]) == {
+        description.translation_key for description in ENTITY_DESCRIPTIONS
+    }
 
 
 @pytest.mark.asyncio

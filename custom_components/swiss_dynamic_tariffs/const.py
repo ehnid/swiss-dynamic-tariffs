@@ -6,7 +6,7 @@ DOMAIN: Final = "swiss_dynamic_tariffs"
 
 NAME: Final = "Swiss Dynamic Tariffs"
 
-VERSION: Final = "0.2.0"
+VERSION: Final = "0.3.0"
 
 DEFAULT_SCAN_INTERVAL: Final = 900
 REQUEST_TIMEOUT: Final = 30

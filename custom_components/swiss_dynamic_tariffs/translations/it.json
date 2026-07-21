@@ -1,0 +1,71 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tariffe dinamiche svizzere",
+        "description": "Seleziona il fornitore di energia e la tariffa",
+        "data": {
+          "provider": "Fornitore e tariffa"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Questo fornitore e questa tariffa sono già configurati."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "electricity_current_price": { "name": "Prezzo attuale dell’energia" },
+      "electricity_next_price": { "name": "Prossimo prezzo dell’energia" },
+      "electricity_today_min": {
+        "name": "Quarto d’ora più economico – energia"
+      },
+      "electricity_today_max": { "name": "Quarto d’ora più costoso – energia" },
+      "electricity_average_price": { "name": "Prezzo medio dell’energia" },
+      "feed_in_current_price": {
+        "name": "Remunerazione attuale dell’immissione"
+      },
+      "feed_in_next_price": {
+        "name": "Prossima remunerazione dell’immissione"
+      },
+      "feed_in_today_min": { "name": "Remunerazione minima dell’immissione" },
+      "feed_in_today_max": { "name": "Remunerazione massima dell’immissione" },
+      "feed_in_average_price": {
+        "name": "Remunerazione media dell’immissione"
+      },
+      "grid_usage_current_price": {
+        "name": "Tariffa attuale per l’utilizzo della rete"
+      },
+      "grid_usage_next_price": {
+        "name": "Prossima tariffa per l’utilizzo della rete"
+      },
+      "grid_usage_today_min": {
+        "name": "Quarto d’ora più economico – utilizzo della rete"
+      },
+      "grid_usage_today_max": {
+        "name": "Quarto d’ora più costoso – utilizzo della rete"
+      },
+      "grid_usage_average_price": {
+        "name": "Tariffa media per l’utilizzo della rete"
+      },
+      "grid_current_price": { "name": "Tariffa di rete totale attuale" },
+      "grid_next_price": { "name": "Prossima tariffa di rete totale" },
+      "grid_today_min": {
+        "name": "Quarto d’ora più economico – tariffa di rete totale"
+      },
+      "grid_today_max": {
+        "name": "Quarto d’ora più costoso – tariffa di rete totale"
+      },
+      "grid_average_price": { "name": "Tariffa di rete totale media" },
+      "integrated_current_price": { "name": "Tariffa complessiva attuale" },
+      "integrated_next_price": { "name": "Prossima tariffa complessiva" },
+      "integrated_today_min": {
+        "name": "Quarto d’ora più economico – tariffa complessiva"
+      },
+      "integrated_today_max": {
+        "name": "Quarto d’ora più costoso – tariffa complessiva"
+      },
+      "integrated_average_price": { "name": "Tariffa complessiva media" }
+    }
+  }
+}

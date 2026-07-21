@@ -12,5 +12,58 @@
     "abort": {
       "already_configured": "Dieser Anbieter und Tarif sind bereits konfiguriert."
     }
+  },
+  "entity": {
+    "sensor": {
+      "electricity_current_price": { "name": "Aktueller Energiepreis" },
+      "electricity_next_price": { "name": "Nächster Energiepreis" },
+      "electricity_today_min": {
+        "name": "Günstigste Viertelstunde – Energiepreis"
+      },
+      "electricity_today_max": {
+        "name": "Teuerste Viertelstunde – Energiepreis"
+      },
+      "electricity_average_price": {
+        "name": "Durchschnittlicher Energiepreis"
+      },
+      "feed_in_current_price": { "name": "Aktuelle Einspeisevergütung" },
+      "feed_in_next_price": { "name": "Nächste Einspeisevergütung" },
+      "feed_in_today_min": { "name": "Niedrigste Einspeisevergütung" },
+      "feed_in_today_max": { "name": "Höchste Einspeisevergütung" },
+      "feed_in_average_price": {
+        "name": "Durchschnittliche Einspeisevergütung"
+      },
+      "grid_usage_current_price": { "name": "Aktueller Netznutzungspreis" },
+      "grid_usage_next_price": { "name": "Nächster Netznutzungspreis" },
+      "grid_usage_today_min": {
+        "name": "Günstigste Viertelstunde – Netznutzung"
+      },
+      "grid_usage_today_max": {
+        "name": "Teuerste Viertelstunde – Netznutzung"
+      },
+      "grid_usage_average_price": {
+        "name": "Durchschnittlicher Netznutzungspreis"
+      },
+      "grid_current_price": { "name": "Aktueller Netzpreis inklusive Abgaben" },
+      "grid_next_price": { "name": "Nächster Netzpreis inklusive Abgaben" },
+      "grid_today_min": {
+        "name": "Günstigste Viertelstunde – Netz inklusive Abgaben"
+      },
+      "grid_today_max": {
+        "name": "Teuerste Viertelstunde – Netz inklusive Abgaben"
+      },
+      "grid_average_price": {
+        "name": "Durchschnittlicher Netzpreis inklusive Abgaben"
+      },
+      "integrated_current_price": { "name": "Aktueller Gesamtpreis" },
+      "integrated_next_price": { "name": "Nächster Gesamtpreis" },
+      "integrated_today_min": {
+        "name": "Günstigste Viertelstunde – Gesamtpreis"
+      },
+      "integrated_today_max": {
+        "name": "Teuerste Viertelstunde – Gesamtpreis"
+      },
+      "integrated_average_price": { "name": "Durchschnittlicher Gesamtpreis" }
+    }
   }
 }

@@ -267,6 +267,39 @@ def test_average_price():
         assert coordinator.average_price("electricity") == pytest.approx(0.30)
 
 
+def test_future_periods_returns_all_future_prices():
+    """Test returning every future quarter hour for one tariff component."""
+
+    frozen_now, periods = _frozen_quarter_hours()
+    coordinator = SwissDynamicTariffsCoordinator.__new__(SwissDynamicTariffsCoordinator)
+    coordinator.data = periods
+
+    with patch(
+        "custom_components.swiss_dynamic_tariffs.coordinator.dt_util.now",
+        return_value=frozen_now,
+    ):
+        assert coordinator.future_periods("electricity") == periods[2:]
+
+
+def test_future_periods_omits_missing_tariff_values():
+    """Test that future periods without the selected component are omitted."""
+
+    frozen_now, periods = _frozen_quarter_hours()
+    periods[2] = TariffPeriod(
+        start=periods[2].start,
+        end=periods[2].end,
+        feed_in=periods[2].feed_in,
+    )
+    coordinator = SwissDynamicTariffsCoordinator.__new__(SwissDynamicTariffsCoordinator)
+    coordinator.data = periods
+
+    with patch(
+        "custom_components.swiss_dynamic_tariffs.coordinator.dt_util.now",
+        return_value=frozen_now,
+    ):
+        assert coordinator.future_periods("electricity") == [periods[3]]
+
+
 def test_cheapest_period_without_data():
     """Test that cheapest/most expensive/average handle an empty dataset."""
 
@@ -277,3 +310,4 @@ def test_cheapest_period_without_data():
     assert coordinator.most_expensive_period("electricity") is None
     assert coordinator.average_price("electricity") is None
     assert coordinator.next_period is None
+    assert coordinator.future_periods("electricity") == []

@@ -12,5 +12,60 @@
     "abort": {
       "already_configured": "Ce fournisseur et ce tarif sont déjà configurés."
     }
+  },
+  "entity": {
+    "sensor": {
+      "electricity_current_price": { "name": "Prix actuel de l’énergie" },
+      "electricity_next_price": { "name": "Prochain prix de l’énergie" },
+      "electricity_today_min": {
+        "name": "Quart d’heure le moins cher – énergie"
+      },
+      "electricity_today_max": {
+        "name": "Quart d’heure le plus cher – énergie"
+      },
+      "electricity_average_price": { "name": "Prix moyen de l’énergie" },
+      "feed_in_current_price": {
+        "name": "Rémunération actuelle de l’injection"
+      },
+      "feed_in_next_price": { "name": "Prochaine rémunération de l’injection" },
+      "feed_in_today_min": { "name": "Rémunération minimale de l’injection" },
+      "feed_in_today_max": { "name": "Rémunération maximale de l’injection" },
+      "feed_in_average_price": {
+        "name": "Rémunération moyenne de l’injection"
+      },
+      "grid_usage_current_price": {
+        "name": "Tarif actuel d’utilisation du réseau"
+      },
+      "grid_usage_next_price": {
+        "name": "Prochain tarif d’utilisation du réseau"
+      },
+      "grid_usage_today_min": {
+        "name": "Quart d’heure le moins cher – utilisation du réseau"
+      },
+      "grid_usage_today_max": {
+        "name": "Quart d’heure le plus cher – utilisation du réseau"
+      },
+      "grid_usage_average_price": {
+        "name": "Tarif moyen d’utilisation du réseau"
+      },
+      "grid_current_price": { "name": "Tarif réseau total actuel" },
+      "grid_next_price": { "name": "Prochain tarif réseau total" },
+      "grid_today_min": {
+        "name": "Quart d’heure le moins cher – tarif réseau total"
+      },
+      "grid_today_max": {
+        "name": "Quart d’heure le plus cher – tarif réseau total"
+      },
+      "grid_average_price": { "name": "Tarif réseau total moyen" },
+      "integrated_current_price": { "name": "Tarif global actuel" },
+      "integrated_next_price": { "name": "Prochain tarif global" },
+      "integrated_today_min": {
+        "name": "Quart d’heure le moins cher – tarif global"
+      },
+      "integrated_today_max": {
+        "name": "Quart d’heure le plus cher – tarif global"
+      },
+      "integrated_average_price": { "name": "Tarif global moyen" }
+    }
   }
 }

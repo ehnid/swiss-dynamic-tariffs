@@ -35,26 +35,23 @@ SensorKind = Literal[
     "average_price",
 ]
 
-# Tariff components a provider can report. "electricity" is what the
-# customer pays for consumption, "feed_in" is the compensation for
-# feeding electricity back into the grid (Rueckspeisung), "grid" is the
-# grid-usage fee (Netznutzung) and "integrated" is a provider-specific
-# all-in price that already combines multiple components.
-TARIFF_TYPES: tuple[tuple[TariffType, str, str], ...] = (
-    ("electricity", "Electricity", "mdi:flash"),
-    ("feed_in", "Feed-in", "mdi:transmission-tower-export"),
-    ("grid_usage", "Grid Usage", "mdi:transmission-tower-import"),
-    ("grid", "Grid", "mdi:transmission-tower"),
-    ("integrated", "Integrated", "mdi:sigma"),
+# Tariff components a provider can report. User-facing names are supplied
+# through Home Assistant's entity translation system.
+TARIFF_TYPES: tuple[tuple[TariffType, str], ...] = (
+    ("electricity", "mdi:flash"),
+    ("feed_in", "mdi:transmission-tower-export"),
+    ("grid_usage", "mdi:transmission-tower-import"),
+    ("grid", "mdi:transmission-tower"),
+    ("integrated", "mdi:sigma"),
 )
 
 # One sensor per tariff component is generated for each of these kinds.
-SENSOR_KINDS: tuple[tuple[SensorKind, str], ...] = (
-    (SENSOR_CURRENT_PRICE, "Current"),
-    (SENSOR_NEXT_PRICE, "Next"),
-    (SENSOR_TODAY_MIN, "Cheapest Quarter Hour"),
-    (SENSOR_TODAY_MAX, "Most Expensive Quarter Hour"),
-    (SENSOR_AVERAGE_PRICE, "Average"),
+SENSOR_KINDS: tuple[SensorKind, ...] = (
+    SENSOR_CURRENT_PRICE,
+    SENSOR_NEXT_PRICE,
+    SENSOR_TODAY_MIN,
+    SENSOR_TODAY_MAX,
+    SENSOR_AVERAGE_PRICE,
 )
 
 
@@ -72,12 +69,13 @@ def _build_entity_descriptions() -> tuple[TariffSensorDescription, ...]:
 
     descriptions: list[TariffSensorDescription] = []
 
-    for tariff_type, tariff_name, icon in TARIFF_TYPES:
-        for kind, kind_name in SENSOR_KINDS:
+    for tariff_type, icon in TARIFF_TYPES:
+        for kind in SENSOR_KINDS:
+            key = f"{tariff_type}_{kind}"
             descriptions.append(
                 TariffSensorDescription(
-                    key=f"{tariff_type}_{kind}",
-                    name=f"{tariff_name} {kind_name}",
+                    key=key,
+                    translation_key=key,
                     tariff_type=tariff_type,
                     kind=kind,
                     native_unit_of_measurement=CURRENCY_PER_KWH,
@@ -189,14 +187,27 @@ class SwissDynamicTariffSensor(
 
     @property
     def extra_state_attributes(self) -> dict[str, object] | None:
-        """Return the start/end of the quarter hour this value refers to."""
+        """Return timing details and, for Next, every future quarter hour."""
 
         period = self._reference_period()
 
         if period is None:
             return None
 
-        return {
+        attributes: dict[str, object] = {
             "start": period.start,
             "end": period.end,
         }
+
+        if self.entity_description.kind == SENSOR_NEXT_PRICE:
+            tariff_type = self.entity_description.tariff_type
+            attributes["future_prices"] = [
+                {
+                    "start": future.start.isoformat(),
+                    "end": future.end.isoformat(),
+                    "price": getattr(future, tariff_type),
+                }
+                for future in self.coordinator.future_periods(tariff_type)
+            ]
+
+        return attributes
