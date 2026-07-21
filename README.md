@@ -22,16 +22,17 @@
 
 Currently supported providers:
 
-| Provider | Status      |
-| -------- | ----------- |
-| BKW      | Implemented |
-| CKW      | Planned     |
-| Groupe E | Planned     |
-| Custom   | Planned     |
+| Provider | Status                               |
+| -------- | ------------------------------------ |
+| BKW      | Implemented (dynamic feed-in tariff) |
+| CKW      | Implemented (`home_dynamic`)         |
+| Groupe E | Planned                              |
+| Custom   | Planned                              |
 
-For every price component a provider reports (consumption, feed-in,
-grid usage, and any all-in/"integrated" price), five sensors are
-created:
+For every price component supported by the selected provider (consumption,
+feed-in, grid usage, or an all-in/"integrated" price), five sensors are
+created. The public BKW endpoint currently publishes the dynamic feed-in
+tariff, so a BKW configuration creates five feed-in sensors:
 
 | Sensor                      | Meaning                                                |
 | --------------------------- | ------------------------------------------------------ |
@@ -44,7 +45,11 @@ created:
 "Cheapest" and "most expensive" are computed over every quarter hour
 the provider has already published that hasn't ended yet - this
 covers the rest of today plus tomorrow once a provider publishes
-next-day prices (as BKW does in the early afternoon).
+next-day prices.
+
+When BKW switches the endpoint to the newly published day, the integration
+retains previously fetched periods until they end. This keeps the current
+tariff available while Home Assistant is running.
 
 ![example][exampleimg]
 
@@ -62,6 +67,7 @@ Using your HA configuration directory (folder) as a starting point you should no
 
 ```text
 custom_components/swiss_dynamic_tariffs/translations/en.json
+custom_components/swiss_dynamic_tariffs/translations/de.json
 custom_components/swiss_dynamic_tariffs/translations/fr.json
 custom_components/swiss_dynamic_tariffs/translations/nb.json
 custom_components/swiss_dynamic_tariffs/__init__.py
@@ -76,6 +82,8 @@ custom_components/swiss_dynamic_tariffs/sensor.py
 custom_components/swiss_dynamic_tariffs/providers/__init__.py
 custom_components/swiss_dynamic_tariffs/providers/base.py
 custom_components/swiss_dynamic_tariffs/providers/bkw.py
+custom_components/swiss_dynamic_tariffs/providers/ckw.py
+custom_components/swiss_dynamic_tariffs/providers/parser.py
 custom_components/swiss_dynamic_tariffs/providers/registry.py
 ```
 

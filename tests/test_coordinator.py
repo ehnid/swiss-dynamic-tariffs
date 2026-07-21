@@ -186,6 +186,51 @@ def test_next_period():
         assert coordinator.next_period == coordinator.data[2]
 
 
+def test_next_period_without_current_period():
+    """Test that the first future period is returned when none is active."""
+
+    frozen_now, periods = _frozen_quarter_hours()
+    coordinator = SwissDynamicTariffsCoordinator.__new__(SwissDynamicTariffsCoordinator)
+    coordinator.data = periods[2:]
+
+    with patch(
+        "custom_components.swiss_dynamic_tariffs.coordinator.dt_util.now",
+        return_value=frozen_now,
+    ):
+        assert coordinator.next_period == periods[2]
+
+
+def test_merge_keeps_active_periods_when_provider_publishes_next_day():
+    """Test that still-active old data survives a provider response rollover."""
+
+    frozen_now = dt_util.now()
+    active = TariffPeriod(
+        start=frozen_now - timedelta(minutes=5),
+        end=frozen_now + timedelta(minutes=10),
+        feed_in=0.10,
+    )
+    expired = TariffPeriod(
+        start=frozen_now - timedelta(minutes=20),
+        end=frozen_now - timedelta(minutes=5),
+        feed_in=0.09,
+    )
+    future = TariffPeriod(
+        start=frozen_now + timedelta(hours=1),
+        end=frozen_now + timedelta(hours=1, minutes=15),
+        feed_in=0.11,
+    )
+    coordinator = SwissDynamicTariffsCoordinator.__new__(SwissDynamicTariffsCoordinator)
+    coordinator.data = [expired, active]
+
+    with patch(
+        "custom_components.swiss_dynamic_tariffs.coordinator.dt_util.now",
+        return_value=frozen_now,
+    ):
+        merged = coordinator._merge_tariff_periods([future])
+
+    assert merged == [active, future]
+
+
 def test_cheapest_and_most_expensive_period():
     """Test identifying the cheapest and most expensive upcoming quarter hour."""
 

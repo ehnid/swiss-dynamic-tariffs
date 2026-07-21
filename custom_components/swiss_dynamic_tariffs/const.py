@@ -8,9 +8,8 @@ NAME: Final = "Swiss Dynamic Tariffs"
 
 VERSION: Final = "0.1.0"
 
-ATTRIBUTION = "Data provided by BKW"
-
 DEFAULT_SCAN_INTERVAL: Final = 900
+REQUEST_TIMEOUT: Final = 30
 
 PLATFORMS: list[str] = ["sensor"]
 
@@ -28,18 +27,11 @@ CONF_API_KEY: Final = "api_key"
 
 PROVIDER_BKW: Final = "bkw"
 PROVIDER_CKW: Final = "ckw"
-PROVIDER_GROUPE_E: Final = "groupe_e"
-PROVIDER_CUSTOM: Final = "custom"
-
-
-PROVIDERS: Final = {
-    PROVIDER_BKW: "BKW",
-    PROVIDER_CKW: "CKW",
-    PROVIDER_GROUPE_E: "Groupe E",
-    PROVIDER_CUSTOM: "Custom",
-}
-
-BKW_API_URL = "https://api.bkw.ch/api/dyntariffs/v1/tariffs/"
+BKW_API_URL: Final = "https://api.bkw.ch/api/dyntariffs/v1/tariffs/"
+CKW_API_URL: Final = (
+    "https://e-ckw-public-data.de-c1.eu1.cloudhub.io/api/v1/"
+    "netzinformationen/energie/dynamische-preise"
+)
 
 # Sensor types
 

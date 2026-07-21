@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from ..const import PROVIDER_BKW, PROVIDER_CKW
 from .base import TariffProvider
 from .bkw import BKWProvider
+from .ckw import CKWProvider
 
 
 PROVIDERS: dict[str, type[TariffProvider]] = {
-    "bkw": BKWProvider,
+    PROVIDER_BKW: BKWProvider,
+    PROVIDER_CKW: CKWProvider,
 }
 
 

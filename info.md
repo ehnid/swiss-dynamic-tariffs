@@ -15,6 +15,13 @@
 | -------- | ----------------------------------------------------------- |
 | `sensor` | Current, next, min/max and average tariff values (CHF/kWh). |
 
+Supported providers:
+
+| Provider | Tariffs                              |
+| -------- | ------------------------------------ |
+| BKW      | Dynamic feed-in tariff               |
+| CKW      | `home_dynamic` electricity and grid |
+
 ![example][exampleimg]
 
 {% if not installed %}

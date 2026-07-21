@@ -49,3 +49,18 @@ async def test_config_flow_already_configured(hass):
 
     assert result["type"] == "abort"
     assert result["reason"] == "already_configured"
+
+
+@pytest.mark.asyncio
+async def test_config_flow_ckw(hass):
+    """Test configuring CKW as a second supported provider."""
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": "user"},
+        data={"provider": "ckw"},
+    )
+
+    assert result["type"] == "create_entry"
+    assert result["title"] == "CKW Dynamic Tariffs"
+    assert result["data"] == {"provider": "ckw"}

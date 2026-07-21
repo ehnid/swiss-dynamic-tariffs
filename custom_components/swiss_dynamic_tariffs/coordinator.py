@@ -47,6 +47,7 @@ class SwissDynamicTariffsCoordinator(
                 seconds=DEFAULT_SCAN_INTERVAL,
             ),
             config_entry=entry,
+            always_update=False,
         )
 
     async def _async_update_data(
@@ -56,14 +57,38 @@ class SwissDynamicTariffsCoordinator(
         _LOGGER.debug("Fetching tariff data")
 
         try:
-            data = await self.provider.async_get_tariffs()
+            fresh_data = await self.provider.async_get_tariffs()
         except Exception as err:
             _LOGGER.exception("Unable to fetch tariff data.")
             raise UpdateFailed(f"Unable to fetch tariffs: {err}") from err
 
-        _LOGGER.debug("Received tariff data: %s", data)
+        data = self._merge_tariff_periods(fresh_data)
+
+        _LOGGER.debug("Received %d tariff periods", len(data))
 
         return data
+
+    def _merge_tariff_periods(
+        self,
+        fresh_data: list[TariffPeriod],
+    ) -> list[TariffPeriod]:
+        """Merge new periods with still-relevant data from the previous update.
+
+        BKW switches its response to the next day's values after publication.
+        Keeping periods that have not ended prevents the current price from
+        disappearing for a continuously running Home Assistant instance.
+        """
+
+        now = dt_util.now()
+        previous_data = getattr(self, "data", None) or []
+        periods = {
+            (period.start, period.end): period
+            for period in previous_data
+            if period.end > now
+        }
+        periods.update({(period.start, period.end): period for period in fresh_data})
+
+        return sorted(periods.values(), key=lambda period: period.start)
 
     @property
     def current_period(self) -> TariffPeriod | None:
@@ -84,7 +109,16 @@ class SwissDynamicTariffsCoordinator(
     def next_period(self) -> TariffPeriod | None:
         """Return the tariff period directly following the current one."""
 
-        upcoming = self._upcoming_periods()
+        if not self.data:
+            return None
+
+        now = dt_util.now()
+        current = self.current_period
+
+        if current is not None:
+            upcoming = [period for period in self.data if period.start >= current.end]
+        else:
+            upcoming = [period for period in self.data if period.start > now]
 
         if not upcoming:
             return None

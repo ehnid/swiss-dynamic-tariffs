@@ -8,6 +8,7 @@ from typing import Literal
 from homeassistant.components.sensor import (
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -24,14 +25,7 @@ from .const import (
 )
 from .coordinator import SwissDynamicTariffsCoordinator
 from .entity import SwissDynamicTariffsEntity
-from .models import TariffPeriod
-
-TariffType = Literal[
-    "electricity",
-    "feed_in",
-    "grid",
-    "integrated",
-]
+from .models import TariffPeriod, TariffType
 
 SensorKind = Literal[
     "current_price",
@@ -49,6 +43,7 @@ SensorKind = Literal[
 TARIFF_TYPES: tuple[tuple[TariffType, str, str], ...] = (
     ("electricity", "Electricity", "mdi:flash"),
     ("feed_in", "Feed-in", "mdi:transmission-tower-export"),
+    ("grid_usage", "Grid Usage", "mdi:transmission-tower-import"),
     ("grid", "Grid", "mdi:transmission-tower"),
     ("integrated", "Integrated", "mdi:sigma"),
 )
@@ -86,6 +81,11 @@ def _build_entity_descriptions() -> tuple[TariffSensorDescription, ...]:
                     tariff_type=tariff_type,
                     kind=kind,
                     native_unit_of_measurement=CURRENCY_PER_KWH,
+                    state_class=(
+                        SensorStateClass.MEASUREMENT
+                        if kind == SENSOR_CURRENT_PRICE
+                        else None
+                    ),
                     icon=icon,
                 )
             )
@@ -105,6 +105,7 @@ async def async_setup_entry(
 
     coordinator: SwissDynamicTariffsCoordinator = hass.data[DOMAIN][entry.entry_id]
 
+    supported_types = coordinator.provider.supported_tariff_types
     entities = [
         SwissDynamicTariffSensor(
             coordinator,
@@ -112,6 +113,7 @@ async def async_setup_entry(
             description,
         )
         for description in ENTITY_DESCRIPTIONS
+        if description.tariff_type in supported_types
     ]
 
     async_add_entities(entities)

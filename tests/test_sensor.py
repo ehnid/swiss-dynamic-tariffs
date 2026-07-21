@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+from homeassistant.components.sensor import SensorStateClass
 
 from custom_components.swiss_dynamic_tariffs.const import (
     CURRENCY_PER_KWH,
@@ -16,10 +17,17 @@ from custom_components.swiss_dynamic_tariffs.sensor import (
     ENTITY_DESCRIPTIONS,
     SwissDynamicTariffSensor,
     TariffSensorDescription,
+    async_setup_entry,
 )
 
 
 class FakeCoordinator:
+    provider = SimpleNamespace(
+        name="BKW",
+        attribution="Data provided by BKW",
+        supported_tariff_types=("feed_in",),
+    )
+
     current_period = SimpleNamespace(
         electricity=0.25,
         feed_in=0.10,
@@ -257,7 +265,13 @@ def test_entity_descriptions_cover_all_tariff_types_and_kinds():
     tariff_types = {description.tariff_type for description in ENTITY_DESCRIPTIONS}
     kinds = {description.kind for description in ENTITY_DESCRIPTIONS}
 
-    assert tariff_types == {"electricity", "feed_in", "grid", "integrated"}
+    assert tariff_types == {
+        "electricity",
+        "feed_in",
+        "grid_usage",
+        "grid",
+        "integrated",
+    }
     assert kinds == {
         SENSOR_CURRENT_PRICE,
         SENSOR_NEXT_PRICE,
@@ -266,3 +280,32 @@ def test_entity_descriptions_cover_all_tariff_types_and_kinds():
         SENSOR_AVERAGE_PRICE,
     }
     assert len(ENTITY_DESCRIPTIONS) == len(tariff_types) * len(kinds)
+
+    current_descriptions = [
+        description
+        for description in ENTITY_DESCRIPTIONS
+        if description.kind == SENSOR_CURRENT_PRICE
+    ]
+    assert all(
+        description.state_class == SensorStateClass.MEASUREMENT
+        for description in current_descriptions
+    )
+
+
+@pytest.mark.asyncio
+async def test_setup_only_adds_tariff_types_supported_by_provider(hass):
+    """Test that BKW does not create unavailable consumption/grid sensors."""
+
+    entry = SimpleNamespace(entry_id="test")
+    hass.data.setdefault("swiss_dynamic_tariffs", {})[entry.entry_id] = (
+        FakeCoordinator()
+    )
+    async_add_entities = Mock()
+
+    await async_setup_entry(hass, entry, async_add_entities)
+
+    entities = async_add_entities.call_args.args[0]
+    assert len(entities) == 5
+    assert all(
+        entity.entity_description.tariff_type == "feed_in" for entity in entities
+    )

@@ -12,6 +12,7 @@ class FakeCoordinator:
 
     data = []
     last_update_success = True
+    provider = SimpleNamespace(name="BKW", attribution="Data provided by BKW")
 
 
 def test_entity_device_info():
@@ -40,8 +41,8 @@ def test_entity_device_info():
     assert "manufacturer" in device_info
 
 
-def test_entity_extra_attributes():
-    """Test extra attributes."""
+def test_entity_attribution():
+    """Test provider attribution."""
 
     entry = SimpleNamespace(
         entry_id="test",
@@ -52,10 +53,7 @@ def test_entity_extra_attributes():
         entry,
     )
 
-    attributes = entity.extra_state_attributes
-
-    assert "integration" in attributes
-    assert attributes["integration"] == "swiss_dynamic_tariffs"
+    assert entity._attr_attribution == "Data provided by BKW"
 
 
 class _ReadOnlyConfigEntryBase:
