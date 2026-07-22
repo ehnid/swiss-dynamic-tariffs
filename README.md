@@ -1,7 +1,7 @@
 # Swiss Dynamic Tariffs
 
 <p align="center">
-  <img src="custom_components/swiss_dynamic_tariffs/brand/logo.png" alt="Swiss Dynamic Tariffs logo" width="220">
+  <img src="https://raw.githubusercontent.com/ehnid/swiss-dynamic-tariffs/main/custom_components/swiss_dynamic_tariffs/brand/logo.png" alt="Swiss Dynamic Tariffs logo" width="220">
 </p>
 
 [![GitHub Release][releases-shield]][releases]

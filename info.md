@@ -10,7 +10,7 @@
 [![Community Forum][forum-shield]][forum]
 
 <p align="center">
-  <img src="custom_components/swiss_dynamic_tariffs/brand/logo.png" alt="Swiss Dynamic Tariffs logo" width="220">
+  <img src="https://raw.githubusercontent.com/ehnid/swiss-dynamic-tariffs/main/custom_components/swiss_dynamic_tariffs/brand/logo.png" alt="Swiss Dynamic Tariffs logo" width="220">
 </p>
 
 **This component will set up the following platforms.**

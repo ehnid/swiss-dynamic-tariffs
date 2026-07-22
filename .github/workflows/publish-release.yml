@@ -28,6 +28,13 @@ jobs:
           cd custom_components/swiss_dynamic_tariffs
           zip -r "${GITHUB_WORKSPACE}/swiss_dynamic_tariffs.zip" .
 
+      - name: Verify HACS archive
+        shell: bash
+        run: |
+          unzip -t swiss_dynamic_tariffs.zip
+          unzip -Z1 swiss_dynamic_tariffs.zip | grep -Fxq "brand/icon.png"
+          unzip -Z1 swiss_dynamic_tariffs.zip | grep -Fxq "brand/logo.png"
+
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
