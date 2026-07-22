@@ -15,9 +15,9 @@
 
 **This component will set up the following platforms.**
 
-| Platform | Description                                                 |
-| -------- | ----------------------------------------------------------- |
-| `sensor` | Current, next, min/max and average tariff values (CHF/kWh). |
+| Platform | Description                                               |
+| -------- | --------------------------------------------------------- |
+| `sensor` | Current, next, min/max, average and forecast tariff data. |
 
 Supported provider/tariff combinations:
 

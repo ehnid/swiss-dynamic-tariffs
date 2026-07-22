@@ -20,9 +20,9 @@
 
 **This component will set up the following platforms.**
 
-| Platform | Description                                                 |
-| -------- | ----------------------------------------------------------- |
-| `sensor` | Current, next, min/max and average tariff values (CHF/kWh). |
+| Platform | Description                                               |
+| -------- | --------------------------------------------------------- |
+| `sensor` | Current, next, min/max, average and forecast tariff data. |
 
 Currently selectable provider/tariff combinations:
 
@@ -43,26 +43,32 @@ flow. Multiple tariffs from the same provider can therefore be added as
 separate integration entries.
 
 For every price component supported by the selected provider (consumption,
-feed-in, grid usage, or an all-in/"integrated" price), five sensors are
-created. The public BKW endpoint currently publishes the dynamic feed-in
-tariff, so a BKW configuration creates five feed-in sensors:
+feed-in, grid usage, or an all-in/"integrated" price), five price sensors are
+created. One additional **Tariff forecast** sensor combines every published
+future quarter hour and all available price components. The public BKW
+endpoint currently publishes the dynamic feed-in tariff, so a BKW
+configuration creates five feed-in price sensors plus the forecast sensor:
 
-| Sensor                      | Meaning                                                                                                |
-| --------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Current                     | Price of the currently active quarter hour.                                                            |
-| Next                        | Price of the next quarter hour. All known future prices are included in the `future_prices` attribute. |
-| Cheapest Quarter Hour       | Lowest upcoming price and when it occurs.                                                              |
-| Most Expensive Quarter Hour | Highest upcoming price and when it occurs.                                                             |
-| Average                     | Average price across all known upcoming quarter hours.                                                 |
+| Sensor                      | Meaning                                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| Current                     | Price of the currently active quarter hour.                                                     |
+| Next                        | Price of the next quarter hour.                                                                 |
+| Cheapest Quarter Hour       | Lowest upcoming price and when it occurs.                                                       |
+| Most Expensive Quarter Hour | Highest upcoming price and when it occurs.                                                      |
+| Average                     | Average price across all known upcoming quarter hours.                                          |
+| Tariff forecast             | Number of future hours available; all quarter-hour prices are stored in the `prices` attribute. |
 
 "Cheapest" and "most expensive" are computed over every quarter hour
 the provider has already published that hasn't ended yet - this
 covers the rest of today plus tomorrow once a provider publishes
 next-day prices.
 
-The `future_prices` attribute of every **Next** sensor contains all published
-future quarter hours for that price component. Each list item provides
-`start`, `end`, and `price`; timestamps use ISO 8601 and prices use CHF/kWh.
+The **Tariff forecast** sensor state shows how many future hours are currently
+available. Its `prices` attribute contains every published future quarter hour.
+Each list item provides `start`, `end`, and every price component supplied by
+the selected provider. Timestamps use ISO 8601 and prices use CHF/kWh. The
+attributes `available_from`, `available_until`, and `period_count` summarize
+the available range.
 
 ### Price component terminology
 

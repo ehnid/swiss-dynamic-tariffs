@@ -158,8 +158,8 @@ class SwissDynamicTariffsCoordinator(
 
         return sum(values) / len(values)
 
-    def future_periods(self, tariff_type: str) -> list[TariffPeriod]:
-        """Return every future period containing the requested tariff value."""
+    def future_periods(self, tariff_type: str | None = None) -> list[TariffPeriod]:
+        """Return every future period, optionally filtered by tariff component."""
 
         if not self.data:
             return []
@@ -169,7 +169,8 @@ class SwissDynamicTariffsCoordinator(
         return [
             period
             for period in self.data
-            if period.start > now and getattr(period, tariff_type, None) is not None
+            if period.start > now
+            and (tariff_type is None or getattr(period, tariff_type, None) is not None)
         ]
 
     def _upcoming_periods(self) -> list[TariffPeriod]:

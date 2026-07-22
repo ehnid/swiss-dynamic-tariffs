@@ -5,7 +5,8 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
-from homeassistant.components.sensor import SensorStateClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.const import UnitOfTime
 
 from custom_components.swiss_dynamic_tariffs.const import (
     CURRENCY_PER_KWH,
@@ -17,6 +18,8 @@ from custom_components.swiss_dynamic_tariffs.const import (
 )
 from custom_components.swiss_dynamic_tariffs.sensor import (
     ENTITY_DESCRIPTIONS,
+    FORECAST_DESCRIPTION,
+    SwissDynamicTariffForecastSensor,
     SwissDynamicTariffSensor,
     TariffSensorDescription,
     async_setup_entry,
@@ -33,6 +36,7 @@ class FakeCoordinator:
     current_period = SimpleNamespace(
         electricity=0.25,
         feed_in=0.10,
+        grid_usage=0.04,
         grid=0.05,
         integrated=0.30,
         start=datetime.fromisoformat("2026-01-01T00:00:00+00:00"),
@@ -42,6 +46,7 @@ class FakeCoordinator:
     next_period = SimpleNamespace(
         electricity=0.40,
         feed_in=0.12,
+        grid_usage=0.04,
         grid=0.05,
         integrated=0.45,
         start=datetime.fromisoformat("2026-01-01T01:00:00+00:00"),
@@ -51,6 +56,7 @@ class FakeCoordinator:
     cheapest = SimpleNamespace(
         electricity=0.05,
         feed_in=0.10,
+        grid_usage=0.04,
         grid=0.05,
         integrated=0.10,
         start=datetime.fromisoformat("2026-01-01T03:00:00+00:00"),
@@ -60,6 +66,7 @@ class FakeCoordinator:
     most_expensive = SimpleNamespace(
         electricity=0.60,
         feed_in=0.10,
+        grid_usage=0.04,
         grid=0.05,
         integrated=0.65,
         start=datetime.fromisoformat("2026-01-01T05:00:00+00:00"),
@@ -86,7 +93,7 @@ class FakeCoordinator:
         """Return a fake average price, ignoring the tariff type."""
         return 0.20
 
-    def future_periods(self, tariff_type):
+    def future_periods(self, tariff_type=None):
         """Return all fake future periods, ignoring the tariff type."""
         return [self.next_period, self.cheapest, self.most_expensive]
 
@@ -188,23 +195,76 @@ def test_sensor_next_price():
 
     assert sensor.native_value == 0.40
     assert sensor.extra_state_attributes["start"] == FakeCoordinator.next_period.start
-    assert sensor.extra_state_attributes["future_prices"] == [
-        {
-            "start": FakeCoordinator.next_period.start.isoformat(),
-            "end": FakeCoordinator.next_period.end.isoformat(),
-            "price": 0.40,
-        },
-        {
-            "start": FakeCoordinator.cheapest.start.isoformat(),
-            "end": FakeCoordinator.cheapest.end.isoformat(),
-            "price": 0.05,
-        },
-        {
-            "start": FakeCoordinator.most_expensive.start.isoformat(),
-            "end": FakeCoordinator.most_expensive.end.isoformat(),
-            "price": 0.60,
-        },
-    ]
+
+
+def test_forecast_sensor_exposes_all_future_quarter_hours():
+    """Test the dedicated forecast sensor state and price list."""
+
+    entry = Mock()
+    entry.entry_id = "test"
+    coordinator = FakeCoordinator()
+    coordinator.provider = SimpleNamespace(
+        name="CKW",
+        attribution="Data provided by CKW",
+        supported_tariff_types=(
+            "electricity",
+            "feed_in",
+            "grid_usage",
+            "grid",
+            "integrated",
+        ),
+    )
+    sensor = SwissDynamicTariffForecastSensor(coordinator, entry)
+
+    assert sensor.native_value == 3
+    assert sensor.entity_description.device_class == SensorDeviceClass.DURATION
+    assert sensor.entity_description.native_unit_of_measurement == UnitOfTime.HOURS
+    assert sensor.extra_state_attributes == {
+        "available_from": FakeCoordinator.next_period.start,
+        "available_until": FakeCoordinator.most_expensive.end,
+        "period_count": 3,
+        "prices": [
+            {
+                "start": FakeCoordinator.next_period.start.isoformat(),
+                "end": FakeCoordinator.next_period.end.isoformat(),
+                "electricity": 0.40,
+                "feed_in": 0.12,
+                "grid_usage": 0.04,
+                "grid": 0.05,
+                "integrated": 0.45,
+            },
+            {
+                "start": FakeCoordinator.cheapest.start.isoformat(),
+                "end": FakeCoordinator.cheapest.end.isoformat(),
+                "electricity": 0.05,
+                "feed_in": 0.10,
+                "grid_usage": 0.04,
+                "grid": 0.05,
+                "integrated": 0.10,
+            },
+            {
+                "start": FakeCoordinator.most_expensive.start.isoformat(),
+                "end": FakeCoordinator.most_expensive.end.isoformat(),
+                "electricity": 0.60,
+                "feed_in": 0.10,
+                "grid_usage": 0.04,
+                "grid": 0.05,
+                "integrated": 0.65,
+            },
+        ],
+    }
+
+
+def test_forecast_sensor_without_future_data():
+    """Test the forecast sensor when no future periods are available."""
+
+    coordinator = FakeCoordinator()
+    coordinator.future_periods = Mock(return_value=[])
+    entry = Mock(entry_id="test")
+    sensor = SwissDynamicTariffForecastSensor(coordinator, entry)
+
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes is None
 
 
 def test_sensor_cheapest_quarter_hour():
@@ -333,9 +393,12 @@ def test_all_sensor_names_are_translated(language):
     )
     translations = json.loads(translation_path.read_text(encoding="utf-8"))
 
-    assert set(translations["entity"]["sensor"]) == {
+    expected_translation_keys = {
         description.translation_key for description in ENTITY_DESCRIPTIONS
     }
+    expected_translation_keys.add(FORECAST_DESCRIPTION.translation_key)
+
+    assert set(translations["entity"]["sensor"]) == expected_translation_keys
 
 
 @pytest.mark.asyncio
@@ -351,7 +414,8 @@ async def test_setup_only_adds_tariff_types_supported_by_provider(hass):
     await async_setup_entry(hass, entry, async_add_entities)
 
     entities = async_add_entities.call_args.args[0]
-    assert len(entities) == 5
+    assert len(entities) == 6
     assert all(
-        entity.entity_description.tariff_type == "feed_in" for entity in entities
+        entity.entity_description.tariff_type == "feed_in" for entity in entities[:-1]
     )
+    assert isinstance(entities[-1], SwissDynamicTariffForecastSensor)

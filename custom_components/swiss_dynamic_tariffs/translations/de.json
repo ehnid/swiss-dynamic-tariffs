@@ -15,6 +15,7 @@
   },
   "entity": {
     "sensor": {
+      "forecast": { "name": "Tarifprognose" },
       "electricity_current_price": { "name": "Aktueller Energiepreis" },
       "electricity_next_price": { "name": "Nächster Energiepreis" },
       "electricity_today_min": {

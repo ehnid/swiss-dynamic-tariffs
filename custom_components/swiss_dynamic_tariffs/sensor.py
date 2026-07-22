@@ -6,11 +6,13 @@ from dataclasses import dataclass
 from typing import Literal
 
 from homeassistant.components.sensor import (
+    SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -93,6 +95,15 @@ def _build_entity_descriptions() -> tuple[TariffSensorDescription, ...]:
 
 ENTITY_DESCRIPTIONS: tuple[TariffSensorDescription, ...] = _build_entity_descriptions()
 
+FORECAST_DESCRIPTION = SensorEntityDescription(
+    key="forecast",
+    translation_key="forecast",
+    device_class=SensorDeviceClass.DURATION,
+    native_unit_of_measurement=UnitOfTime.HOURS,
+    suggested_display_precision=2,
+    icon="mdi:chart-timeline-variant",
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -113,6 +124,12 @@ async def async_setup_entry(
         for description in ENTITY_DESCRIPTIONS
         if description.tariff_type in supported_types
     ]
+    entities.append(
+        SwissDynamicTariffForecastSensor(
+            coordinator,
+            entry,
+        )
+    )
 
     async_add_entities(entities)
 
@@ -187,27 +204,81 @@ class SwissDynamicTariffSensor(
 
     @property
     def extra_state_attributes(self) -> dict[str, object] | None:
-        """Return timing details and, for Next, every future quarter hour."""
+        """Return the start/end of the quarter hour this value refers to."""
 
         period = self._reference_period()
 
         if period is None:
             return None
 
-        attributes: dict[str, object] = {
+        return {
             "start": period.start,
             "end": period.end,
         }
 
-        if self.entity_description.kind == SENSOR_NEXT_PRICE:
-            tariff_type = self.entity_description.tariff_type
-            attributes["future_prices"] = [
-                {
-                    "start": future.start.isoformat(),
-                    "end": future.end.isoformat(),
-                    "price": getattr(future, tariff_type),
-                }
-                for future in self.coordinator.future_periods(tariff_type)
-            ]
 
-        return attributes
+class SwissDynamicTariffForecastSensor(
+    SwissDynamicTariffsEntity,
+    SensorEntity,
+):
+    """Sensor exposing all published future quarter-hour prices."""
+
+    entity_description = FORECAST_DESCRIPTION
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: SwissDynamicTariffsCoordinator,
+        config_entry: ConfigEntry,
+    ) -> None:
+        """Initialize the tariff forecast sensor."""
+
+        super().__init__(coordinator, config_entry)
+        self._attr_unique_id = f"{DOMAIN}_{self._entry.entry_id}_forecast"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the duration covered by future prices in hours."""
+
+        periods = self.coordinator.future_periods()
+
+        if not periods:
+            return None
+
+        return (
+            sum((period.end - period.start).total_seconds() for period in periods)
+            / 3600
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, object] | None:
+        """Return every future period and all provider-supported prices."""
+
+        periods = self.coordinator.future_periods()
+
+        if not periods:
+            return None
+
+        tariff_types = self.coordinator.provider.supported_tariff_types
+        prices: list[dict[str, object]] = []
+
+        for period in periods:
+            price: dict[str, object] = {
+                "start": period.start.isoformat(),
+                "end": period.end.isoformat(),
+            }
+            price.update(
+                {
+                    tariff_type: value
+                    for tariff_type in tariff_types
+                    if (value := getattr(period, tariff_type, None)) is not None
+                }
+            )
+            prices.append(price)
+
+        return {
+            "available_from": periods[0].start,
+            "available_until": periods[-1].end,
+            "period_count": len(periods),
+            "prices": prices,
+        }
