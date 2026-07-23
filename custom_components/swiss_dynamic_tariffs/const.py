@@ -6,7 +6,7 @@ DOMAIN: Final = "swiss_dynamic_tariffs"
 
 NAME: Final = "Swiss Dynamic Tariffs"
 
-VERSION: Final = "0.3.1"
+VERSION: Final = "0.4.0"
 
 DEFAULT_SCAN_INTERVAL: Final = 900
 REQUEST_TIMEOUT: Final = 30
@@ -14,6 +14,7 @@ REQUEST_TIMEOUT: Final = 30
 PLATFORMS: list[str] = ["sensor"]
 
 CURRENCY_PER_KWH = "CHF/kWh"
+FRONTEND_URL: Final = f"/{DOMAIN}/swiss-dynamic-tariffs.js"
 
 
 # Configuration keys

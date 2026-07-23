@@ -2,7 +2,9 @@
 
 from unittest.mock import patch
 
+from homeassistant.components.frontend import DATA_EXTRA_MODULE_URL
 import pytest
+from pytest_homeassistant_custom_component.common import mock_component
 
 pytest_plugins = [
     "pytest_homeassistant_custom_component",
@@ -13,6 +15,13 @@ pytest_plugins = [
 def enable_custom_integrations(enable_custom_integrations):
     """Enable custom integrations."""
     return
+
+
+@pytest.fixture(autouse=True)
+def mock_frontend_fixture(hass):
+    """Provide the frontend state omitted from the lightweight test install."""
+    mock_component(hass, "frontend")
+    hass.data[DATA_EXTRA_MODULE_URL] = set()
 
 
 # This fixture is used to prevent HomeAssistant from attempting to create and dismiss persistent

@@ -34,6 +34,7 @@ jobs:
           unzip -t swiss_dynamic_tariffs.zip
           unzip -Z1 swiss_dynamic_tariffs.zip | grep -Fxq "brand/icon.png"
           unzip -Z1 swiss_dynamic_tariffs.zip | grep -Fxq "brand/logo.png"
+          unzip -Z1 swiss_dynamic_tariffs.zip | grep -Fxq "frontend/swiss-dynamic-tariffs.js"
 
       - name: Publish GitHub release
         env:

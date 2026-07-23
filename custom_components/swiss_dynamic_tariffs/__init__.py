@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from homeassistant.components import frontend as ha_frontend
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
@@ -12,8 +16,10 @@ from .const import (
     CONF_PROVIDER,
     CONF_TARIFF,
     DOMAIN,
+    FRONTEND_URL,
     PLATFORMS,
     PROVIDER_BKW,
+    VERSION,
 )
 from .coordinator import SwissDynamicTariffsCoordinator
 from .providers.registry import create_provider
@@ -22,12 +28,25 @@ CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 type SwissDynamicTariffsConfigEntry = ConfigEntry[SwissDynamicTariffsCoordinator]
 
+FRONTEND_PATH = Path(__file__).parent / "frontend" / "swiss-dynamic-tariffs.js"
+
 
 async def async_setup(
     hass: HomeAssistant,
     config: dict,
 ) -> bool:
     """Set up the integration."""
+
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                FRONTEND_URL,
+                str(FRONTEND_PATH),
+                cache_headers=True,
+            )
+        ]
+    )
+    ha_frontend.add_extra_js_url(hass, f"{FRONTEND_URL}?v={VERSION}")
 
     return True
 

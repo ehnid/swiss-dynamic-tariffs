@@ -70,6 +70,28 @@ the selected provider. Timestamps use ISO 8601 and prices use CHF/kWh. The
 attributes `available_from`, `available_until`, and `period_count` summarize
 the available range.
 
+## Dashboard visualization
+
+The integration includes its own responsive **Tariff forecast** card. It needs
+no ApexCharts installation and no manually maintained YAML. The card displays:
+
+- a labelled time axis and price axis in CHF/kWh;
+- every price component published by the selected tariff;
+- the current, cheapest and most expensive quarter hour;
+- a marker for the current time and exact values on hover;
+- an expandable table containing every future quarter-hour value.
+
+To add the card to an existing dashboard, edit the dashboard, add a card by
+entity and select a **Tariff forecast** sensor. Home Assistant 2026.6 and newer
+automatically suggests **Swiss Dynamic Tariffs – Tariff forecast** in the
+Community section. On earlier supported versions, select that card directly
+from the card picker.
+
+Home Assistant 2026.5 and newer also offers **Swiss Dynamic Tariffs** under
+**Settings → Dashboards → Add dashboard → Community dashboards**. This dynamic
+dashboard automatically creates one tariff card for every configured tariff
+forecast; the displayed prices update live with the sensor data.
+
 ### Price component terminology
 
 The provider APIs use the following English terms. Not every provider supplies
@@ -125,6 +147,7 @@ custom_components/swiss_dynamic_tariffs/const.py
 custom_components/swiss_dynamic_tariffs/coordinator.py
 custom_components/swiss_dynamic_tariffs/entity.py
 custom_components/swiss_dynamic_tariffs/exceptions.py
+custom_components/swiss_dynamic_tariffs/frontend/swiss-dynamic-tariffs.js
 custom_components/swiss_dynamic_tariffs/manifest.json
 custom_components/swiss_dynamic_tariffs/models.py
 custom_components/swiss_dynamic_tariffs/sensor.py

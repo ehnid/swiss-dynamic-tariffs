@@ -32,6 +32,19 @@ Supported provider/tariff combinations:
 Every tariff is available as its own option in the configuration flow, so
 more than one tariff from the same provider can be configured.
 
+## Automatic tariff charts
+
+The integration includes a responsive tariff forecast card with labelled time
+and price axes, a legend, current/minimum/maximum price labels, interactive
+quarter-hour values and an expandable data table. No additional chart card or
+YAML configuration is required.
+
+When adding a **Tariff forecast** entity to a dashboard, Home Assistant 2026.6
+and newer suggests the matching **Swiss Dynamic Tariffs – Tariff forecast**
+card automatically. Home Assistant 2026.5 and newer can additionally create a
+**Swiss Dynamic Tariffs** Community dashboard containing one live chart for
+every configured tariff.
+
 {% if not installed %}
 
 ## Installation
