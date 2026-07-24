@@ -87,7 +87,8 @@ After the first tariff is configured, the integration automatically adds
 one live tariff card for every configured forecast. No dashboard needs to be
 created manually. An expanded quarter-hour table remains open while sensor
 updates refresh its values and chart. The selected day also remains unchanged
-during these updates.
+during these updates. Today is always selected initially; if no values are
+available for today, the card says so instead of silently switching to tomorrow.
 
 To add the card to an existing dashboard, edit the dashboard, add a card by
 entity and select a **Tariff forecast** sensor. Home Assistant 2026.6 and newer

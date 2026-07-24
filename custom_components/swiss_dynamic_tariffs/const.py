@@ -1,12 +1,16 @@
 """Constants for Swiss Dynamic Tariffs."""
 
+import json
+from pathlib import Path
 from typing import Final
 
 DOMAIN: Final = "swiss_dynamic_tariffs"
 
 NAME: Final = "Swiss Dynamic Tariffs"
 
-VERSION: Final = "0.4.1"
+VERSION: Final = json.loads(
+    (Path(__file__).parent / "manifest.json").read_text(encoding="utf-8")
+)["version"]
 
 DEFAULT_SCAN_INTERVAL: Final = 900
 REQUEST_TIMEOUT: Final = 30

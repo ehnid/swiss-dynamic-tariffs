@@ -63,6 +63,7 @@ const TEXT = {
     dashboardDescription:
       "Automatische Preisdiagramme für alle Tarifprognosen.",
     noData: "Noch keine zukünftigen Tarifdaten verfügbar.",
+    noDataForDay: "Für diesen Tag sind keine Tarifdaten verfügbar.",
     unavailable: "Der Tarifprognose-Sensor ist nicht verfügbar.",
     chooseEntity: "Tarifprognose-Sensor",
     priceAxis: "Preis [CHF/kWh]",
@@ -89,6 +90,7 @@ const TEXT = {
     dashboardTitle: "Dynamic electricity tariffs",
     dashboardDescription: "Automatic price charts for all tariff forecasts.",
     noData: "No future tariff data is available yet.",
+    noDataForDay: "No tariff data is available for this day.",
     unavailable: "The tariff forecast sensor is unavailable.",
     chooseEntity: "Tariff forecast sensor",
     priceAxis: "Price [CHF/kWh]",
@@ -115,6 +117,7 @@ const TEXT = {
     dashboardDescription:
       "Graphiques automatiques pour toutes les prévisions tarifaires.",
     noData: "Aucune donnée tarifaire future n’est encore disponible.",
+    noDataForDay: "Aucune donnée tarifaire n’est disponible pour ce jour.",
     unavailable: "Le capteur de prévision tarifaire n’est pas disponible.",
     chooseEntity: "Capteur de prévision tarifaire",
     priceAxis: "Prix [CHF/kWh]",
@@ -142,6 +145,7 @@ const TEXT = {
     dashboardDescription:
       "Grafici automatici per tutte le previsioni tariffarie.",
     noData: "Non sono ancora disponibili dati tariffari futuri.",
+    noDataForDay: "Non sono disponibili dati tariffari per questo giorno.",
     unavailable: "Il sensore della previsione tariffaria non è disponibile.",
     chooseEntity: "Sensore della previsione tariffaria",
     priceAxis: "Prezzo [CHF/kWh]",
@@ -419,6 +423,31 @@ class SwissDynamicTariffsCard extends HTMLElement {
     }).format(new Date(Date.UTC(year, month - 1, day, 12)));
   }
 
+  _renderDayNavigation(dayOptions) {
+    return dayOptions
+      .map(
+        (option) => `
+          <button
+            type="button"
+            class="day-button ${
+              option.offset === this._selectedDayOffset ? "active" : ""
+            }"
+            data-day-offset="${option.offset}"
+            role="tab"
+            aria-selected="${
+              option.offset === this._selectedDayOffset ? "true" : "false"
+            }"
+          >
+            <span>${escapeHtml(option.label)}</span>
+            <strong>${escapeHtml(
+              this._formatCalendarDay(option.dateKey),
+            )}</strong>
+          </button>
+        `,
+      )
+      .join("");
+  }
+
   _emptyCard(message) {
     const text = textFor(this._hass);
     const title = this._config?.title || text.title;
@@ -441,6 +470,36 @@ class SwissDynamicTariffsCard extends HTMLElement {
     `;
   }
 
+  _emptyDayCard(title, selectedDay, dayNavigation, message) {
+    const text = textFor(this._hass);
+
+    this.shadowRoot.innerHTML = `
+      <style>${this._styles()}</style>
+      <ha-card>
+        <div class="card-header">
+          <div>
+            <div class="eyebrow">Swiss Dynamic Tariffs</div>
+            <h2>${escapeHtml(title)}</h2>
+            <p>${escapeHtml(this._formatCalendarDay(selectedDay.dateKey))}</p>
+          </div>
+          <ha-icon icon="mdi:chart-timeline-variant"></ha-icon>
+        </div>
+        <div
+          class="day-navigation"
+          role="tablist"
+          aria-label="${escapeHtml(text.selectDay)}"
+        >
+          ${dayNavigation}
+        </div>
+        <div class="empty-state">
+          <ha-icon icon="mdi:calendar-alert"></ha-icon>
+          <p>${escapeHtml(message)}</p>
+        </div>
+      </ha-card>
+    `;
+    this._bindDayNavigation();
+  }
+
   _render() {
     if (!this.shadowRoot || !this._hass || !this._config) {
       return;
@@ -459,11 +518,6 @@ class SwissDynamicTariffsCard extends HTMLElement {
     }
 
     const allPeriods = parsePeriods(state);
-    if (!allPeriods.length) {
-      this._emptyCard(text.noData);
-      return;
-    }
-
     const timeZone = this._hass.config.time_zone;
     const todayKey = calendarDateKey(Date.now(), timeZone);
     const dayOptions = [0, 1].map((offset) => {
@@ -478,17 +532,19 @@ class SwissDynamicTariffsCard extends HTMLElement {
         label: offset === 0 ? text.today : text.tomorrow,
       };
     });
-    let selectedDay = dayOptions.find(
-      (option) => option.offset === this._selectedDayOffset,
-    );
-    if (!selectedDay?.periods.length) {
-      selectedDay = dayOptions.find((option) => option.periods.length);
-      if (selectedDay) {
-        this._selectedDayOffset = selectedDay.offset;
-      }
-    }
-    if (!selectedDay) {
-      this._emptyCard(text.noData);
+    const selectedDay =
+      dayOptions.find((option) => option.offset === this._selectedDayOffset) ||
+      dayOptions[0];
+    const title =
+      this._config.title || state.attributes.friendly_name || text.title;
+    const dayNavigation = this._renderDayNavigation(dayOptions);
+    if (!selectedDay.periods.length) {
+      this._emptyDayCard(
+        title,
+        selectedDay,
+        dayNavigation,
+        allPeriods.length ? text.noDataForDay : text.noData,
+      );
       return;
     }
 
@@ -554,32 +610,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
         ? period
         : selected,
     );
-    const title =
-      this._config.title || state.attributes.friendly_name || text.title;
     const coverageHours = (xMaximum - xMinimum) / 3_600_000;
-    const dayNavigation = dayOptions
-      .map(
-        (option) => `
-          <button
-            type="button"
-            class="day-button ${
-              option.offset === this._selectedDayOffset ? "active" : ""
-            }"
-            data-day-offset="${option.offset}"
-            role="tab"
-            aria-selected="${
-              option.offset === this._selectedDayOffset ? "true" : "false"
-            }"
-            ${option.periods.length ? "" : "disabled"}
-          >
-            <span>${escapeHtml(option.label)}</span>
-            <strong>${escapeHtml(
-              this._formatCalendarDay(option.dateKey),
-            )}</strong>
-          </button>
-        `,
-      )
-      .join("");
 
     const gridLines = yTicks
       .map((tick) => {
