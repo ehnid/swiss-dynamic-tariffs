@@ -68,12 +68,17 @@ const TEXT = {
     priceAxis: "Preis [CHF/kWh]",
     timeAxis: "Zeit",
     current: "Aktuell",
+    next: "Nächster Wert",
     minimum: "Günstigste",
     maximum: "Teuerste",
     period: "Verfügbarer Zeitraum",
     until: "bis",
     periods: "Viertelstunden",
     now: "Jetzt",
+    today: "Heute",
+    tomorrow: "Morgen",
+    selectDay: "Tag auswählen",
+    first: "Erster Wert",
     showData: "Viertelstundenwerte anzeigen",
     time: "Zeitfenster",
     noForecasts:
@@ -89,12 +94,17 @@ const TEXT = {
     priceAxis: "Price [CHF/kWh]",
     timeAxis: "Time",
     current: "Current",
+    next: "Next value",
     minimum: "Cheapest",
     maximum: "Most expensive",
     period: "Available period",
     until: "to",
     periods: "quarter-hours",
     now: "Now",
+    today: "Today",
+    tomorrow: "Tomorrow",
+    selectDay: "Select day",
+    first: "First value",
     showData: "Show quarter-hour values",
     time: "Time window",
     noForecasts: "No tariff forecast found yet. Set up a dynamic tariff first.",
@@ -110,12 +120,17 @@ const TEXT = {
     priceAxis: "Prix [CHF/kWh]",
     timeAxis: "Heure",
     current: "Actuel",
+    next: "Prochaine valeur",
     minimum: "Le moins cher",
     maximum: "Le plus cher",
     period: "Période disponible",
     until: "à",
     periods: "quarts d’heure",
     now: "Maintenant",
+    today: "Aujourd’hui",
+    tomorrow: "Demain",
+    selectDay: "Sélectionner le jour",
+    first: "Première valeur",
     showData: "Afficher les valeurs par quart d’heure",
     time: "Plage horaire",
     noForecasts:
@@ -132,12 +147,17 @@ const TEXT = {
     priceAxis: "Prezzo [CHF/kWh]",
     timeAxis: "Ora",
     current: "Attuale",
+    next: "Prossimo valore",
     minimum: "Più conveniente",
     maximum: "Più costoso",
     period: "Periodo disponibile",
     until: "a",
     periods: "quarti d’ora",
     now: "Adesso",
+    today: "Oggi",
+    tomorrow: "Domani",
+    selectDay: "Seleziona giorno",
+    first: "Primo valore",
     showData: "Mostra i valori ogni quarto d’ora",
     time: "Intervallo",
     noForecasts:
@@ -203,6 +223,27 @@ function parsePeriods(state) {
         period.endTime > period.startTime,
     )
     .sort((left, right) => left.startTime - right.startTime);
+}
+
+function calendarDateKey(timestamp, timeZone) {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(timestamp));
+  const value = (type) => parts.find((part) => part.type === type)?.value;
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+function shiftCalendarDateKey(dateKey, days) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days));
+  return [
+    shifted.getUTCFullYear(),
+    String(shifted.getUTCMonth() + 1).padStart(2, "0"),
+    String(shifted.getUTCDate()).padStart(2, "0"),
+  ].join("-");
 }
 
 function availableComponents(periods, configuredComponents) {
@@ -295,6 +336,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
     this._config = undefined;
     this._chartModel = undefined;
     this._detailsOpen = false;
+    this._selectedDayOffset = 0;
     this._renderedHostWidth = undefined;
     this._resizeObserver = new ResizeObserver(([entry]) => {
       const hostWidth = Math.round(entry.contentRect.width);
@@ -343,6 +385,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
 
   _formatDateTime(timestamp) {
     return new Intl.DateTimeFormat(languageFromHass(this._hass), {
+      timeZone: this._hass.config.time_zone,
       day: "2-digit",
       month: "2-digit",
       hour: "2-digit",
@@ -352,6 +395,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
 
   _formatTime(timestamp) {
     return new Intl.DateTimeFormat(languageFromHass(this._hass), {
+      timeZone: this._hass.config.time_zone,
       hour: "2-digit",
       minute: "2-digit",
     }).format(new Date(timestamp));
@@ -359,9 +403,20 @@ class SwissDynamicTariffsCard extends HTMLElement {
 
   _formatDate(timestamp) {
     return new Intl.DateTimeFormat(languageFromHass(this._hass), {
+      timeZone: this._hass.config.time_zone,
       day: "2-digit",
       month: "2-digit",
     }).format(new Date(timestamp));
+  }
+
+  _formatCalendarDay(dateKey) {
+    const [year, month, day] = dateKey.split("-").map(Number);
+    return new Intl.DateTimeFormat(languageFromHass(this._hass), {
+      timeZone: "UTC",
+      weekday: "short",
+      day: "2-digit",
+      month: "2-digit",
+    }).format(new Date(Date.UTC(year, month - 1, day, 12)));
   }
 
   _emptyCard(message) {
@@ -403,9 +458,43 @@ class SwissDynamicTariffsCard extends HTMLElement {
       return;
     }
 
-    const periods = parsePeriods(state);
+    const allPeriods = parsePeriods(state);
+    if (!allPeriods.length) {
+      this._emptyCard(text.noData);
+      return;
+    }
+
+    const timeZone = this._hass.config.time_zone;
+    const todayKey = calendarDateKey(Date.now(), timeZone);
+    const dayOptions = [0, 1].map((offset) => {
+      const dateKey = shiftCalendarDateKey(todayKey, offset);
+      const periods = allPeriods.filter(
+        (period) => calendarDateKey(period.startTime, timeZone) === dateKey,
+      );
+      return {
+        offset,
+        dateKey,
+        periods,
+        label: offset === 0 ? text.today : text.tomorrow,
+      };
+    });
+    let selectedDay = dayOptions.find(
+      (option) => option.offset === this._selectedDayOffset,
+    );
+    if (!selectedDay?.periods.length) {
+      selectedDay = dayOptions.find((option) => option.periods.length);
+      if (selectedDay) {
+        this._selectedDayOffset = selectedDay.offset;
+      }
+    }
+    if (!selectedDay) {
+      this._emptyCard(text.noData);
+      return;
+    }
+
+    const periods = selectedDay.periods;
     const components = availableComponents(periods, this._config.components);
-    if (!periods.length || !components.length) {
+    if (!components.length) {
       this._emptyCard(text.noData);
       return;
     }
@@ -444,10 +533,15 @@ class SwissDynamicTariffsCard extends HTMLElement {
       Number.isFinite(Number(period[primaryComponent.key])),
     );
     const now = Date.now();
-    const currentPeriod =
-      primaryPeriods.find(
-        (period) => period.startTime <= now && now < period.endTime,
-      ) || primaryPeriods[0];
+    const activePeriod = primaryPeriods.find(
+      (period) => period.startTime <= now && now < period.endTime,
+    );
+    const headlinePeriod = activePeriod || primaryPeriods[0];
+    const headlineLabel = activePeriod
+      ? text.current
+      : this._selectedDayOffset === 0
+        ? text.next
+        : text.first;
     const minimumPeriod = primaryPeriods.reduce((selected, period) =>
       Number(period[primaryComponent.key]) <
       Number(selected[primaryComponent.key])
@@ -463,6 +557,29 @@ class SwissDynamicTariffsCard extends HTMLElement {
     const title =
       this._config.title || state.attributes.friendly_name || text.title;
     const coverageHours = (xMaximum - xMinimum) / 3_600_000;
+    const dayNavigation = dayOptions
+      .map(
+        (option) => `
+          <button
+            type="button"
+            class="day-button ${
+              option.offset === this._selectedDayOffset ? "active" : ""
+            }"
+            data-day-offset="${option.offset}"
+            role="tab"
+            aria-selected="${
+              option.offset === this._selectedDayOffset ? "true" : "false"
+            }"
+            ${option.periods.length ? "" : "disabled"}
+          >
+            <span>${escapeHtml(option.label)}</span>
+            <strong>${escapeHtml(
+              this._formatCalendarDay(option.dateKey),
+            )}</strong>
+          </button>
+        `,
+      )
+      .join("");
 
     const gridLines = yTicks
       .map((tick) => {
@@ -556,11 +673,11 @@ class SwissDynamicTariffsCard extends HTMLElement {
 
     const summary = [
       {
-        label: text.current,
+        label: headlineLabel,
         value: `${this._formatPrice(
-          Number(currentPeriod[primaryComponent.key]),
+          Number(headlinePeriod[primaryComponent.key]),
         )} CHF/kWh`,
-        detail: this._formatTime(currentPeriod.startTime),
+        detail: this._formatTime(headlinePeriod.startTime),
         icon: "mdi:flash",
       },
       {
@@ -637,6 +754,14 @@ class SwissDynamicTariffsCard extends HTMLElement {
             </p>
           </div>
           <ha-icon icon="mdi:chart-timeline-variant"></ha-icon>
+        </div>
+
+        <div
+          class="day-navigation"
+          role="tablist"
+          aria-label="${escapeHtml(text.selectDay)}"
+        >
+          ${dayNavigation}
         </div>
 
         <div class="summary-grid">${summary}</div>
@@ -718,8 +843,25 @@ class SwissDynamicTariffsCard extends HTMLElement {
       periods,
       components,
     };
+    this._bindDayNavigation();
     this._bindChartInteractions();
     this._bindDetailsInteraction();
+  }
+
+  _bindDayNavigation() {
+    for (const button of this.shadowRoot.querySelectorAll(".day-button")) {
+      button.addEventListener("click", () => {
+        const offset = Number(button.dataset.dayOffset);
+        if (
+          Number.isInteger(offset) &&
+          offset !== this._selectedDayOffset &&
+          !button.disabled
+        ) {
+          this._selectedDayOffset = offset;
+          this._render();
+        }
+      });
+    }
   }
 
   _bindChartInteractions() {
@@ -867,6 +1009,67 @@ class SwissDynamicTariffsCard extends HTMLElement {
         margin: 0;
         color: var(--sdt-muted);
         font-size: 0.86rem;
+      }
+
+      .day-navigation {
+        display: inline-grid;
+        grid-template-columns: repeat(2, minmax(116px, 1fr));
+        gap: 4px;
+        margin: 0 0 16px;
+        padding: 4px;
+        border: 1px solid var(--sdt-border);
+        border-radius: 14px;
+        background: color-mix(
+          in srgb,
+          var(--primary-text-color) 5%,
+          transparent
+        );
+      }
+
+      .day-button {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        min-width: 0;
+        padding: 8px 13px;
+        border: 0;
+        border-radius: 10px;
+        color: var(--sdt-muted);
+        background: transparent;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .day-button span {
+        font-size: 0.72rem;
+        font-weight: 600;
+      }
+
+      .day-button strong {
+        color: var(--primary-text-color);
+        font-size: 0.86rem;
+      }
+
+      .day-button.active {
+        color: var(--primary-color);
+        background: var(--card-background-color);
+        box-shadow: 0 1px 5px color-mix(in srgb, #000 18%, transparent);
+      }
+
+      .day-button.active strong {
+        color: var(--primary-color);
+      }
+
+      .day-button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .day-button:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 1px;
       }
 
       .summary-grid {
@@ -1197,6 +1400,12 @@ class SwissDynamicTariffsCard extends HTMLElement {
 
         .summary-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .day-navigation {
+          display: grid;
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .legend {

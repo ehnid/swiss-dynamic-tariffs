@@ -79,13 +79,15 @@ no ApexCharts installation and no manually maintained YAML. The card displays:
 - every price component published by the selected tariff;
 - the current, cheapest and most expensive quarter hour;
 - a marker for the current time and exact values on hover;
+- one-click navigation between today and tomorrow, including their dates;
 - an expandable table containing every future quarter-hour value.
 
 After the first tariff is configured, the integration automatically adds
 **Swiss Dynamic Tariffs** to the Home Assistant sidebar. This panel contains
 one live tariff card for every configured forecast. No dashboard needs to be
 created manually. An expanded quarter-hour table remains open while sensor
-updates refresh its values and chart.
+updates refresh its values and chart. The selected day also remains unchanged
+during these updates.
 
 To add the card to an existing dashboard, edit the dashboard, add a card by
 entity and select a **Tariff forecast** sensor. Home Assistant 2026.6 and newer
