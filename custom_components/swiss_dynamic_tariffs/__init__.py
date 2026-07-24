@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
-from homeassistant.components import frontend as ha_frontend
+from homeassistant.components import frontend as ha_frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -17,12 +18,17 @@ from .const import (
     CONF_TARIFF,
     DOMAIN,
     FRONTEND_URL,
+    NAME,
+    PANEL_COMPONENT_NAME,
+    PANEL_URL_PATH,
     PLATFORMS,
     PROVIDER_BKW,
     VERSION,
 )
 from .coordinator import SwissDynamicTariffsCoordinator
 from .providers.registry import create_provider
+
+_LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
@@ -47,6 +53,17 @@ async def async_setup(
         ]
     )
     ha_frontend.add_extra_js_url(hass, f"{FRONTEND_URL}?v={VERSION}")
+    try:
+        await panel_custom.async_register_panel(
+            hass,
+            frontend_url_path=PANEL_URL_PATH,
+            webcomponent_name=PANEL_COMPONENT_NAME,
+            sidebar_title=NAME,
+            sidebar_icon="mdi:chart-timeline-variant",
+            module_url=f"{FRONTEND_URL}?v={VERSION}",
+        )
+    except ValueError as err:
+        _LOGGER.warning("Unable to register automatic tariff dashboard: %s", err)
 
     return True
 

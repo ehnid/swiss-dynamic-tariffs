@@ -39,6 +39,10 @@ and price axes, a legend, current/minimum/maximum price labels, interactive
 quarter-hour values and an expandable data table. No additional chart card or
 YAML configuration is required.
 
+After the first tariff is configured, **Swiss Dynamic Tariffs** is added to
+the Home Assistant sidebar automatically. It contains one live chart for every
+configured tariff. Expanded quarter-hour tables stay open when prices update.
+
 When adding a **Tariff forecast** entity to a dashboard, Home Assistant 2026.6
 and newer suggests the matching **Swiss Dynamic Tariffs – Tariff forecast**
 card automatically. Home Assistant 2026.5 and newer can additionally create a

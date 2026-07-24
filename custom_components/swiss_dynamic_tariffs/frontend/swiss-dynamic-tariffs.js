@@ -294,6 +294,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
     this._hass = undefined;
     this._config = undefined;
     this._chartModel = undefined;
+    this._detailsOpen = false;
     this._renderedHostWidth = undefined;
     this._resizeObserver = new ResizeObserver(([entry]) => {
       const hostWidth = Math.round(entry.contentRect.width);
@@ -388,6 +389,11 @@ class SwissDynamicTariffsCard extends HTMLElement {
   _render() {
     if (!this.shadowRoot || !this._hass || !this._config) {
       return;
+    }
+
+    const existingDetails = this.shadowRoot.querySelector("details");
+    if (existingDetails) {
+      this._detailsOpen = existingDetails.open;
     }
 
     const text = textFor(this._hass);
@@ -675,7 +681,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
           <div class="tooltip" role="status" aria-live="polite"></div>
         </div>
 
-        <details>
+        <details ${this._detailsOpen ? "open" : ""}>
           <summary>
             <ha-icon icon="mdi:table-clock"></ha-icon>
             ${escapeHtml(text.showData)}
@@ -713,6 +719,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
       components,
     };
     this._bindChartInteractions();
+    this._bindDetailsInteraction();
   }
 
   _bindChartInteractions() {
@@ -723,6 +730,13 @@ class SwissDynamicTariffsCard extends HTMLElement {
 
     chart.addEventListener("pointermove", (event) => this._showTooltip(event));
     chart.addEventListener("pointerleave", () => this._hideTooltip());
+  }
+
+  _bindDetailsInteraction() {
+    const details = this.shadowRoot.querySelector("details");
+    details?.addEventListener("toggle", () => {
+      this._detailsOpen = details.open;
+    });
   }
 
   _showTooltip(event) {
@@ -1197,6 +1211,180 @@ class SwissDynamicTariffsCard extends HTMLElement {
   }
 }
 
+class SwissDynamicTariffsPanel extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._hass = undefined;
+    this._panel = undefined;
+    this._narrow = false;
+    this._renderedKey = undefined;
+    this._cards = new Map();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
+  set panel(panel) {
+    this._panel = panel;
+    this._render();
+  }
+
+  set narrow(narrow) {
+    this._narrow = narrow;
+    this.toggleAttribute("narrow", narrow);
+  }
+
+  set route(route) {
+    this._route = route;
+  }
+
+  _render() {
+    if (!this._hass) {
+      return;
+    }
+
+    const text = textFor(this._hass);
+    const entities = forecastEntities(this._hass);
+    const renderedKey = `${languageFromHass(this._hass)}:${entities
+      .map((state) => state.entity_id)
+      .join(",")}`;
+
+    if (renderedKey === this._renderedKey) {
+      for (const card of this._cards.values()) {
+        card.hass = this._hass;
+      }
+      return;
+    }
+
+    this._renderedKey = renderedKey;
+    this._cards.clear();
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          box-sizing: border-box;
+          min-height: 100%;
+          padding: 24px;
+          background:
+            radial-gradient(
+              circle at 8% 0%,
+              color-mix(in srgb, var(--primary-color) 13%, transparent),
+              transparent 32rem
+            ),
+            var(--primary-background-color);
+        }
+
+        main {
+          width: 100%;
+          max-width: 1180px;
+          margin: 0 auto;
+        }
+
+        header {
+          margin: 4px 2px 24px;
+        }
+
+        .eyebrow {
+          margin-bottom: 5px;
+          color: var(--primary-color);
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.09em;
+          text-transform: uppercase;
+        }
+
+        h1 {
+          margin: 0;
+          color: var(--primary-text-color);
+          font-size: clamp(25px, 4vw, 38px);
+          line-height: 1.15;
+        }
+
+        header p {
+          max-width: 700px;
+          margin: 8px 0 0;
+          color: var(--secondary-text-color);
+          font-size: 15px;
+          line-height: 1.5;
+        }
+
+        .cards {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          gap: 22px;
+        }
+
+        .empty {
+          display: flex;
+          align-items: center;
+          gap: 13px;
+          box-sizing: border-box;
+          min-height: 110px;
+          padding: 22px;
+          border: 1px solid var(--divider-color);
+          border-radius: var(--ha-card-border-radius, 12px);
+          color: var(--secondary-text-color);
+          background: var(--card-background-color);
+          box-shadow: var(--ha-card-box-shadow, none);
+        }
+
+        .empty ha-icon {
+          flex: 0 0 auto;
+          color: var(--primary-color);
+          --mdc-icon-size: 32px;
+        }
+
+        @media (max-width: 600px) {
+          :host {
+            padding: 12px 8px 24px;
+          }
+
+          header {
+            margin: 6px 8px 18px;
+          }
+
+          header p {
+            font-size: 14px;
+          }
+
+          .cards {
+            gap: 14px;
+          }
+        }
+      </style>
+      <main>
+        <header>
+          <div class="eyebrow">Swiss Dynamic Tariffs</div>
+          <h1>${escapeHtml(text.dashboardTitle)}</h1>
+          <p>${escapeHtml(text.dashboardDescription)}</p>
+        </header>
+        ${
+          entities.length
+            ? '<section class="cards" aria-live="polite"></section>'
+            : `
+              <div class="empty">
+                <ha-icon icon="mdi:chart-line-variant"></ha-icon>
+                <span>${escapeHtml(text.noForecasts)}</span>
+              </div>
+            `
+        }
+      </main>
+    `;
+
+    const cardContainer = this.shadowRoot.querySelector(".cards");
+    for (const state of entities) {
+      const card = document.createElement(CARD_TAG);
+      card.setConfig({ entity: state.entity_id });
+      card.hass = this._hass;
+      cardContainer.append(card);
+      this._cards.set(state.entity_id, card);
+    }
+  }
+}
+
 class SwissDynamicTariffsCardEditor extends HTMLElement {
   constructor() {
     super();
@@ -1291,6 +1479,13 @@ class SwissDynamicTariffsDashboardStrategy extends HTMLElement {
 
 if (!customElements.get(CARD_TAG)) {
   customElements.define(CARD_TAG, SwissDynamicTariffsCard);
+}
+
+if (!customElements.get("swiss-dynamic-tariffs-panel")) {
+  customElements.define(
+    "swiss-dynamic-tariffs-panel",
+    SwissDynamicTariffsPanel,
+  );
 }
 
 if (!customElements.get("swiss-dynamic-tariffs-card-editor")) {
