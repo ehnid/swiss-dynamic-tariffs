@@ -203,18 +203,24 @@ class SwissDynamicTariffSensor(
         )
 
     @property
-    def extra_state_attributes(self) -> dict[str, object] | None:
-        """Return the start/end of the quarter hour this value refers to."""
+    def extra_state_attributes(self) -> dict[str, object]:
+        """Return period boundaries and stable dashboard linkage metadata."""
 
         period = self._reference_period()
+        # These stable attributes let the frontend find related sensors even
+        # after a user renames their entity IDs. They remain available when a
+        # sensor has no active period, so Recorder history can still be linked.
+        attributes: dict[str, object] = {
+            "tariff_component": self.entity_description.tariff_type,
+            "tariff_entry_id": self._entry.entry_id,
+            "tariff_role": self.entity_description.kind,
+        }
 
         if period is None:
-            return None
+            return attributes
 
-        return {
-            "start": period.start,
-            "end": period.end,
-        }
+        attributes.update({"start": period.start, "end": period.end})
+        return attributes
 
 
 class SwissDynamicTariffForecastSensor(
@@ -281,4 +287,5 @@ class SwissDynamicTariffForecastSensor(
             "available_until": periods[-1].end,
             "period_count": len(periods),
             "prices": prices,
+            "tariff_entry_id": self._entry.entry_id,
         }

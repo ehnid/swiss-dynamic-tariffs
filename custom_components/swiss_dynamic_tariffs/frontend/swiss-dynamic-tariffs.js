@@ -229,6 +229,113 @@ function parsePeriods(state) {
     .sort((left, right) => left.startTime - right.startTime);
 }
 
+/**
+ * Find current-price sensors by stable integration metadata.
+ *
+ * Entity IDs and friendly names are user-editable, so neither is suitable for
+ * linking a forecast card to the sensors whose Recorder history it needs.
+ */
+function currentPriceEntities(hass, forecastState) {
+  const entryId = forecastState?.attributes?.tariff_entry_id;
+  if (!entryId) {
+    return {};
+  }
+
+  return Object.values(hass?.states || {}).reduce((entities, state) => {
+    const attributes = state.attributes || {};
+    if (
+      attributes.tariff_entry_id === entryId &&
+      attributes.tariff_role === "current_price" &&
+      COMPONENTS.some(
+        (component) => component.key === attributes.tariff_component,
+      )
+    ) {
+      entities[attributes.tariff_component] = state.entity_id;
+    }
+    return entities;
+  }, {});
+}
+
+/**
+ * Convert Recorder states into the same period shape used by the forecast.
+ *
+ * Live states are included because Recorder writes can lag slightly behind the
+ * active quarter-hour. States outside today's Home Assistant calendar date are
+ * deliberately ignored.
+ */
+function parseHistoryPeriods(
+  historyResponse,
+  componentEntities,
+  currentStates,
+  todayKey,
+  timeZone,
+) {
+  const entityComponents = Object.fromEntries(
+    Object.entries(componentEntities).map(([component, entityId]) => [
+      entityId,
+      component,
+    ]),
+  );
+  const recordedStates = Array.isArray(historyResponse)
+    ? historyResponse.flat()
+    : [];
+  const liveStates = Object.values(componentEntities)
+    .map((entityId) => currentStates?.[entityId])
+    .filter(Boolean);
+  const periods = new Map();
+  const now = Date.now();
+
+  for (const state of [...recordedStates, ...liveStates]) {
+    const component = entityComponents[state.entity_id];
+    const attributes = state.attributes || {};
+    const startTime = Date.parse(attributes.start);
+    const endTime = Date.parse(attributes.end);
+    const value = Number(state.state);
+    if (
+      !component ||
+      !Number.isFinite(startTime) ||
+      !Number.isFinite(endTime) ||
+      !Number.isFinite(value) ||
+      startTime > now ||
+      endTime <= startTime ||
+      calendarDateKey(startTime, timeZone) !== todayKey
+    ) {
+      continue;
+    }
+
+    const key = `${startTime}:${endTime}`;
+    const period = periods.get(key) || {
+      start: attributes.start,
+      end: attributes.end,
+      startTime,
+      endTime,
+    };
+    period[component] = value;
+    periods.set(key, period);
+  }
+
+  return [...periods.values()].sort(
+    (left, right) => left.startTime - right.startTime,
+  );
+}
+
+/**
+ * Merge equal time windows without creating duplicate chart points.
+ *
+ * Later sources win component by component. Callers pass history first and the
+ * latest provider forecast second, making fresh provider data authoritative.
+ */
+function mergePeriods(...periodSets) {
+  const periods = new Map();
+  for (const period of periodSets.flat()) {
+    const key = `${period.startTime}:${period.endTime}`;
+    periods.set(key, { ...(periods.get(key) || {}), ...period });
+  }
+  return [...periods.values()].sort(
+    (left, right) => left.startTime - right.startTime,
+  );
+}
+
 function calendarDateKey(timestamp, timeZone) {
   const parts = new Intl.DateTimeFormat("en", {
     timeZone,
@@ -248,6 +355,16 @@ function shiftCalendarDateKey(dateKey, days) {
     String(shifted.getUTCMonth() + 1).padStart(2, "0"),
     String(shifted.getUTCDate()).padStart(2, "0"),
   ].join("-");
+}
+
+function calendarDayDifference(startDateKey, endDateKey) {
+  const toUtc = (dateKey) => {
+    const [year, month, day] = dateKey.split("-").map(Number);
+    return Date.UTC(year, month - 1, day);
+  };
+  return Math.round(
+    (toUtc(endDateKey) - toUtc(startDateKey)) / (24 * 60 * 60 * 1000),
+  );
 }
 
 function availableComponents(periods, configuredComponents) {
@@ -341,6 +458,9 @@ class SwissDynamicTariffsCard extends HTMLElement {
     this._chartModel = undefined;
     this._detailsOpen = false;
     this._selectedDayOffset = 0;
+    this._historyPeriods = [];
+    this._historyLoadingKey = undefined;
+    this._historyLoadedKey = undefined;
     this._renderedHostWidth = undefined;
     this._resizeObserver = new ResizeObserver(([entry]) => {
       const hostWidth = Math.round(entry.contentRect.width);
@@ -368,11 +488,13 @@ class SwissDynamicTariffsCard extends HTMLElement {
     }
 
     this._config = { ...config };
+    this._scheduleHistoryLoad();
     this._render();
   }
 
   set hass(hass) {
     this._hass = hass;
+    this._scheduleHistoryLoad();
     this._render();
   }
 
@@ -421,6 +543,83 @@ class SwissDynamicTariffsCard extends HTMLElement {
       day: "2-digit",
       month: "2-digit",
     }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+  }
+
+  _formatCalendarWeekday(dateKey) {
+    const [year, month, day] = dateKey.split("-").map(Number);
+    return new Intl.DateTimeFormat(languageFromHass(this._hass), {
+      timeZone: "UTC",
+      weekday: "long",
+    }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+  }
+
+  _scheduleHistoryLoad() {
+    if (!this._hass || !this._config?.entity) {
+      return;
+    }
+
+    const state = this._hass.states[this._config.entity];
+    const componentEntities = currentPriceEntities(this._hass, state);
+    const entityIds = Object.values(componentEntities).sort();
+    if (!entityIds.length || typeof this._hass.callApi !== "function") {
+      this._historyPeriods = [];
+      return;
+    }
+
+    const timeZone = this._hass.config.time_zone;
+    const todayKey = calendarDateKey(Date.now(), timeZone);
+    const currentPeriodKeys = entityIds.map((entityId) => {
+      const currentState = this._hass.states[entityId];
+      return `${entityId}:${currentState?.attributes?.start || ""}`;
+    });
+    const requestKey = `${todayKey}:${currentPeriodKeys.join("|")}`;
+    // Home Assistant pushes state updates frequently. Reload history only when
+    // the date, linked entities or active quarter-hour changes.
+    if (
+      requestKey === this._historyLoadingKey ||
+      requestKey === this._historyLoadedKey
+    ) {
+      return;
+    }
+
+    this._historyLoadingKey = requestKey;
+    this._loadHistory(componentEntities, todayKey, timeZone)
+      .then((periods) => {
+        if (this._historyLoadingKey !== requestKey) {
+          return;
+        }
+        this._historyPeriods = periods;
+        this._historyLoadedKey = requestKey;
+        this._historyLoadingKey = undefined;
+        this._render();
+      })
+      .catch(() => {
+        if (this._historyLoadingKey === requestKey) {
+          this._historyLoadedKey = requestKey;
+          this._historyLoadingKey = undefined;
+        }
+      });
+  }
+
+  async _loadHistory(componentEntities, todayKey, timeZone) {
+    const now = new Date();
+    // Twenty-seven hours covers the complete local day even across a 25-hour
+    // daylight-saving transition. Calendar filtering below removes spillover.
+    const historyStart = new Date(now.getTime() - 27 * 60 * 60 * 1000);
+    const entityIds = Object.values(componentEntities);
+    const path =
+      `history/period/${encodeURIComponent(historyStart.toISOString())}` +
+      `?filter_entity_id=${encodeURIComponent(entityIds.join(","))}` +
+      `&end_time=${encodeURIComponent(now.toISOString())}` +
+      "&significant_changes_only=0";
+    const response = await this._hass.callApi("GET", path);
+    return parseHistoryPeriods(
+      response,
+      componentEntities,
+      this._hass.states,
+      todayKey,
+      timeZone,
+    );
   }
 
   _renderDayNavigation(dayOptions) {
@@ -517,10 +716,26 @@ class SwissDynamicTariffsCard extends HTMLElement {
       return;
     }
 
-    const allPeriods = parsePeriods(state);
+    const allPeriods = mergePeriods(this._historyPeriods, parsePeriods(state));
     const timeZone = this._hass.config.time_zone;
     const todayKey = calendarDateKey(Date.now(), timeZone);
-    const dayOptions = [0, 1].map((offset) => {
+    // Always expose today and tomorrow, then add every further date actually
+    // supplied by a provider instead of imposing a 24-hour horizon.
+    const dayOffsets = [
+      ...new Set([
+        0,
+        1,
+        ...allPeriods
+          .map((period) =>
+            calendarDayDifference(
+              todayKey,
+              calendarDateKey(period.startTime, timeZone),
+            ),
+          )
+          .filter((offset) => offset >= 0),
+      ]),
+    ].sort((left, right) => left - right);
+    const dayOptions = dayOffsets.map((offset) => {
       const dateKey = shiftCalendarDateKey(todayKey, offset);
       const periods = allPeriods.filter(
         (period) => calendarDateKey(period.startTime, timeZone) === dateKey,
@@ -529,12 +744,21 @@ class SwissDynamicTariffsCard extends HTMLElement {
         offset,
         dateKey,
         periods,
-        label: offset === 0 ? text.today : text.tomorrow,
+        label:
+          offset === 0
+            ? text.today
+            : offset === 1
+              ? text.tomorrow
+              : this._formatCalendarWeekday(dateKey),
       };
     });
-    const selectedDay =
-      dayOptions.find((option) => option.offset === this._selectedDayOffset) ||
-      dayOptions[0];
+    let selectedDay = dayOptions.find(
+      (option) => option.offset === this._selectedDayOffset,
+    );
+    if (!selectedDay) {
+      selectedDay = dayOptions[0];
+      this._selectedDayOffset = selectedDay.offset;
+    }
     const title =
       this._config.title || state.attributes.friendly_name || text.title;
     const dayNavigation = this._renderDayNavigation(dayOptions);
@@ -560,13 +784,13 @@ class SwissDynamicTariffsCard extends HTMLElement {
     const compact = hostWidth > 0 && hostWidth <= 500;
     const horizontalPadding = compact ? 24 : 44;
     const width = Math.min(
-      760,
+      700,
       Math.max(320, (hostWidth || 804) - horizontalPadding),
     );
-    const height = compact ? 300 : 330;
+    const height = compact ? 235 : 260;
     const plot = compact
-      ? { left: 62, right: 12, top: 26, bottom: 58 }
-      : { left: 82, right: 24, top: 26, bottom: 62 };
+      ? { left: 62, right: 12, top: 24, bottom: 54 }
+      : { left: 78, right: 20, top: 24, bottom: 58 };
     const plotWidth = width - plot.left - plot.right;
     const plotHeight = height - plot.top - plot.bottom;
     const xMinimum = periods[0].startTime;
@@ -1043,11 +1267,14 @@ class SwissDynamicTariffsCard extends HTMLElement {
       }
 
       .day-navigation {
-        display: inline-grid;
-        grid-template-columns: repeat(2, minmax(116px, 1fr));
+        display: flex;
+        width: fit-content;
+        max-width: 100%;
+        box-sizing: border-box;
         gap: 4px;
         margin: 0 0 16px;
         padding: 4px;
+        overflow-x: auto;
         border: 1px solid var(--sdt-border);
         border-radius: 14px;
         background: color-mix(
@@ -1055,6 +1282,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
           var(--primary-text-color) 5%,
           transparent
         );
+        scrollbar-width: thin;
       }
 
       .day-button {
@@ -1062,7 +1290,8 @@ class SwissDynamicTariffsCard extends HTMLElement {
         flex-direction: column;
         align-items: flex-start;
         gap: 2px;
-        min-width: 0;
+        flex: 0 0 auto;
+        min-width: 116px;
         padding: 8px 13px;
         border: 0;
         border-radius: 10px;
@@ -1091,11 +1320,6 @@ class SwissDynamicTariffsCard extends HTMLElement {
 
       .day-button.active strong {
         color: var(--primary-color);
-      }
-
-      .day-button:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
       }
 
       .day-button:focus-visible {
@@ -1158,8 +1382,11 @@ class SwissDynamicTariffsCard extends HTMLElement {
       .legend {
         display: flex;
         flex-wrap: wrap;
+        max-width: 620px;
+        box-sizing: border-box;
         gap: 8px 14px;
-        margin: 0 8px 5px 74px;
+        margin: 0 auto 5px;
+        padding-left: 66px;
         color: var(--sdt-muted);
         font-size: 0.76rem;
       }
@@ -1179,13 +1406,15 @@ class SwissDynamicTariffsCard extends HTMLElement {
       .chart-wrap {
         position: relative;
         width: 100%;
+        max-width: 740px;
+        margin: 0 auto;
       }
 
       .chart {
         display: block;
         width: 100%;
         height: auto;
-        min-height: 260px;
+        max-height: 260px;
         overflow: visible;
       }
 
@@ -1434,17 +1663,15 @@ class SwissDynamicTariffsCard extends HTMLElement {
         }
 
         .day-navigation {
-          display: grid;
           width: 100%;
-          box-sizing: border-box;
         }
 
         .legend {
-          margin-left: 50px;
+          padding-left: 52px;
         }
 
         .chart {
-          min-height: 220px;
+          max-height: 235px;
         }
       }
     `;
@@ -1746,7 +1973,7 @@ if (!window.customCards.some((card) => card.type === CARD_TAG)) {
     type: CARD_TAG,
     name: "Swiss Dynamic Tariffs – Tariff forecast",
     description:
-      "Interactive timeline for future quarter-hour electricity prices.",
+      "Interactive timeline for recorded and forecast quarter-hour prices.",
     preview: true,
     getEntitySuggestion: (hass, entityId) => {
       if (!isForecastState(hass.states[entityId])) {
@@ -1773,7 +2000,7 @@ if (
     type: STRATEGY_TYPE,
     strategyType: "dashboard",
     name: "Swiss Dynamic Tariffs",
-    description: "Automatic price charts for all tariff forecasts.",
+    description: "Automatic charts for recorded and forecast tariff prices.",
     documentationURL:
       "https://github.com/ehnid/swiss-dynamic-tariffs#dashboard-visualization",
   });

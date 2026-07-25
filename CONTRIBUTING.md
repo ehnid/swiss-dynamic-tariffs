@@ -1,105 +1,102 @@
-# Contribution guidelines
+# Contributing to Swiss Dynamic Tariffs
 
-Contributing to this project should be as easy and transparent as possible, whether it's:
+Contributions are welcome. Please use GitHub issues for bugs and feature
+proposals and pull requests for code or documentation changes.
 
-- Reporting a bug
-- Discussing the current state of the code
-- Submitting a fix
-- Proposing new features
+## Before changing code
 
-## Github is used for everything
+Read [the architecture guide](docs/architecture.md). Decisions that affect data
+contracts, provider behaviour, entity identity or dashboard data sources should
+also be documented as an Architecture Decision Record (ADR) under `docs/adr/`.
 
-Github is used to host code, to track issues and feature requests, as well as accept pull requests.
+An ADR explains why a design was selected, which alternatives were considered
+and what consequences maintainers must preserve. Use
+[ADR 0001](docs/adr/0001-dashboard-time-series.md) as the format example.
 
-Pull requests are the best way to propose changes to the codebase.
+## Development environment
 
-1. Fork the repo and create your branch from `master`.
-2. If you've changed something, update the documentation.
-3. Make sure your code lints (using black).
-4. Test you contribution.
-5. Issue that pull request!
-
-## Any contributions you make will be under the MIT Software License
-
-In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
-
-## Report bugs using Github's [issues](../../issues)
-
-GitHub issues are used to track public bugs.
-Report a bug by [opening a new issue](../../issues/new/choose); it's that easy!
-
-## Write bug reports with detail, background, and sample code
-
-**Great Bug Reports** tend to have:
-
-- A quick summary and/or background
-- Steps to reproduce
-  - Be specific!
-  - Give sample code if you can.
-- What you expected would happen
-- What actually happens
-- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
-
-People _love_ thorough bug reports. I'm not even kidding.
-
-## Use a Consistent Coding Style
-
-Use [black](https://github.com/ambv/black) and [prettier](https://prettier.io/)
-to make sure the code follows the style.
-
-Or use the `pre-commit` settings implemented in this repository
-(see deicated section below).
-
-## Test your code modification
-
-This custom component is based on [integration_blueprint template](https://github.com/custom-components/integration_blueprint).
-
-It comes with development environment in a container, easy to launch
-if you use Visual Studio Code. With this container you will have a stand alone
-Home Assistant instance running and already configured with the included
-[`.devcontainer/configuration.yaml`](./.devcontainer/configuration.yaml)
-file.
-
-You can use the `pre-commit` settings implemented in this repository to have
-linting tool checking your contributions (see deicated section below).
-
-You should also verify that existing [tests](./tests) are still working
-and you are encouraged to add new ones.
-You can run the tests using the following commands from the root folder:
+The repository includes a VS Code development container with the required
+Python and Home Assistant dependencies. A local environment can also be used:
 
 ```bash
-# Create a virtual environment
-python3 -m venv venv
-source venv/bin/activate
-# Install requirements
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements_test.txt
-# Run tests and get a summary of successes/failures and code coverage
-pytest --durations=10 --cov-report term-missing --cov=custom_components.swiss_dynamic_tariffs tests
+pre-commit install
 ```
 
-If any of the tests fail, make the necessary changes to the tests as part of
-your changes to the integration.
+On Windows PowerShell, activate the environment with:
 
-## Pre-commit
-
-You can use the [pre-commit](https://pre-commit.com/) settings included in the
-repostory to have code style and linting checks.
-
-With `pre-commit` tool already installed,
-activate the settings of the repository:
-
-```console
-$ pre-commit install
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
-Now the pre-commit tests will be done every time you commit.
+## Workflow
 
-You can run the tests on all repository file with the command:
+1. Fork the repository and create a branch from `main`.
+2. Keep changes focused and preserve backwards-compatible entity unique IDs.
+3. Add or update tests for changed behaviour.
+4. Update user documentation and technical documentation where applicable.
+5. Run the complete checks.
+6. Open a pull request describing the problem, solution and relevant design
+   trade-offs.
 
-```console
-$ pre-commit run --all-files
+## Required checks
+
+Run the same formatting and linting hooks used in CI:
+
+```bash
+pre-commit run --all-files
 ```
+
+Run the test suite:
+
+```bash
+pytest --cov=custom_components.swiss_dynamic_tariffs
+```
+
+For frontend changes, also verify JavaScript syntax:
+
+```bash
+node --check custom_components/swiss_dynamic_tariffs/frontend/swiss-dynamic-tariffs.js
+```
+
+## Adding or changing a provider
+
+The provider system is intentionally isolated from Home Assistant entities:
+
+1. Implement `TariffProvider` under
+   `custom_components/swiss_dynamic_tariffs/providers/`.
+2. Return timezone-aware `TariffPeriod` objects with CHF/kWh values.
+3. Register the provider and each selectable tariff in `providers/registry.py`.
+4. Use the exact user-facing tariff name required in the configuration flow.
+5. Add parser, request and config-flow tests.
+6. Update the supported-tariff table in `README.md` and `info.md`.
+
+Provider code must not rename existing sensor unique IDs or silently invent
+missing price components.
+
+## Documentation responsibilities
+
+- `README.md` is the primary user guide.
+- `info.md` is the concise HACS store description.
+- `docs/architecture.md` describes stable technical structure and contracts.
+- `docs/adr/` records important design decisions and their rationale.
+- Code comments explain local, non-obvious constraints; they should not repeat
+  what the code already states clearly.
+
+## Bug reports
+
+Please include:
+
+- Home Assistant and integration versions;
+- selected provider and tariff;
+- expected and actual behaviour;
+- relevant logs with secrets removed;
+- steps that reproduce the problem;
+- screenshots when the dashboard presentation is involved.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under its MIT License.
+By contributing, you agree that your contribution is licensed under the
+[MIT License](LICENSE).

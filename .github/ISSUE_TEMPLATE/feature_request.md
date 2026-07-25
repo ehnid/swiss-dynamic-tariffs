@@ -1,16 +1,23 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Propose a tariff, provider or Home Assistant feature
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Use case
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+What should become possible in Home Assistant, and why is it useful?
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Proposed behaviour
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+Describe the expected sensors, dashboard behaviour or configuration-flow
+option.
+
+## Provider data source
+
+For a new tariff or provider, include the public tariff page or machine-readable
+data source, the tariff name, units, update frequency and an example response if
+available. Do not include credentials or personal customer data.
+
+## Alternatives and context
+
+Describe alternatives considered and add screenshots or examples where useful.

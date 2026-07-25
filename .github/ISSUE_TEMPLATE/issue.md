@@ -1,40 +1,37 @@
 ---
-name: Issue
-about: Create a report to help us improve
+name: Bug report
+about: Report incorrect tariff data, sensors or dashboard behaviour
 ---
 
-<!-- Before you open a new issue, search through the existing issues to see if others have had the same problem.
+<!-- Search existing issues and test the latest released version first. -->
 
-Issues not containing the minimum requirements will be closed:
+## Environment
 
-- Issues without a description (using the header is not good enough) will be closed.
-- Issues without debug logging will be closed.
-- Issues without configuration will be closed
+- Integration version:
+- Home Assistant version:
+- Provider and tariff selected in the configuration flow:
+- Home Assistant language and time zone:
 
--->
+## Problem
 
-## Version of the custom_component
+Describe what happened and when it started.
 
-<!-- If you are not using the newest version, download and try that before opening an issue
-If you are unsure about the version check the const.py file.
--->
+## Expected behaviour
 
-## Configuration
+Describe the tariff values, sensors or dashboard behaviour you expected.
 
-```yaml
-Add your logs here.
-```
+## Relevant entity data
 
-## Describe the bug
-
-A clear and concise description of what the bug is.
+For sensor problems, copy the affected state and attributes from **Developer
+tools → States**. For dashboard problems, add a screenshot and relevant browser
+console errors. Remove personal data before uploading.
 
 ## Debug log
 
-<!-- To enable debug logs check this https://www.home-assistant.io/components/logger/ -->
+Enable debug logging for `custom_components.swiss_dynamic_tariffs`, reproduce
+the problem and paste the relevant lines below. Do not include credentials or
+personal data.
 
 ```text
-
-Add your logs here.
 
 ```

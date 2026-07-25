@@ -1,89 +1,74 @@
-[![GitHub Release][releases-shield]][releases]
-[![GitHub Activity][commits-shield]][commits]
-[![License][license-shield]][license]
-
-[![hacs][hacsbadge]][hacs]
-[![Project Maintenance][maintenance-shield]][user_profile]
-[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
-
-[![Discord][discord-shield]][discord]
-[![Community Forum][forum-shield]][forum]
+# Swiss Dynamic Tariffs
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ehnid/swiss-dynamic-tariffs/main/custom_components/swiss_dynamic_tariffs/brand/logo.png" alt="Swiss Dynamic Tariffs logo" width="220">
 </p>
 
-**This component will set up the following platforms.**
+Swiss Dynamic Tariffs imports quarter-hourly prices from supported Swiss energy
+providers into Home Assistant. Configuration is completed in the UI; no YAML or
+third-party chart card is required.
 
-| Platform | Description                                               |
-| -------- | --------------------------------------------------------- |
-| `sensor` | Current, next, min/max, average and forecast tariff data. |
+The project was started by an electrical engineer to experiment with home
+automation and support Switzerland's shift towards dynamic electricity prices.
+It is driven by the conviction that broad use of tariff-based load shifting can
+avoid or defer a substantial share of grid reinforcement, especially on
+distribution grid levels 5 and 7. The actual effect depends on adoption, local
+constraints and network planning.
 
-Supported provider/tariff combinations:
+## Supported tariffs
 
-| Provider       | Tariffs                                                   |
-| -------------- | --------------------------------------------------------- |
-| BKW            | `feed_in`                                                 |
-| CKW            | `home_dynamic`, `business_dynamic`                        |
-| Groupe E       | `VARIO`                                                   |
-| Primeo Energie | `NetzDynamisch`, `NetzDynamischAVAG`, `NetzDynamischELAG` |
-| EKZ            | `integrated_400D`, `integrated_400D_E` (Einsiedeln)       |
+- BKW – dynamische Einspeisevergütung
+- CKW – Home Dynamic
+- CKW – Business Dynamic
+- Groupe E – Vario
+- Primeo Energie – Netz dynamisch
+- Primeo Energie – Netz dynamisch (AVAG)
+- Primeo Energie – Netz dynamisch (ELAG)
+- EKZ – Energie Dynamisch + Netz 400D
+- EKZ Einsiedeln – Energie Dynamisch + Netz 400D
 
-Every tariff is available as its own option in the configuration flow, so
-more than one tariff from the same provider can be configured.
+Every tariff is a separate configuration-flow option, so multiple tariffs from
+the same provider can be added.
 
-## Automatic tariff charts
+## Sensors and dashboard
 
-The integration includes a responsive tariff forecast card with labelled time
-and price axes, a legend, current/minimum/maximum price labels, interactive
-quarter-hour values and an expandable data table. No additional chart card or
-YAML configuration is required.
+The integration creates current, next, minimum, maximum and average sensors for
+every price component supplied by the selected tariff. A forecast sensor exposes
+all published future quarter-hour periods.
 
-After the first tariff is configured, **Swiss Dynamic Tariffs** is added to
-the Home Assistant sidebar automatically. It contains one live chart for every
-configured tariff. Expanded quarter-hour tables stay open when prices update.
+The automatic sidebar dashboard provides:
 
-When adding a **Tariff forecast** entity to a dashboard, Home Assistant 2026.6
-and newer suggests the matching **Swiss Dynamic Tariffs – Tariff forecast**
-card automatically. Home Assistant 2026.5 and newer can additionally create a
-**Swiss Dynamic Tariffs** Community dashboard containing one live chart for
-every configured tariff.
+- a compact chart with labelled time and price axes;
+- today's recorded current-price values combined with the forecast;
+- all dates published by the provider, including forecasts beyond 24 hours;
+- exact hover values and minimum/maximum annotations;
+- an expandable quarter-hour table that remains open during updates.
+
+Past chart values require Home Assistant Recorder/History to record the
+corresponding **Current price** sensors. Forecast display continues to work when
+history is unavailable.
 
 {% if not installed %}
 
 ## Installation
 
-1. Click install.
-1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "Swiss Dynamic Tariffs".
+1. Install **Swiss Dynamic Tariffs** through HACS.
+2. Restart Home Assistant.
+3. Open **Settings → Devices & services → Add integration**.
+4. Search for **Swiss Dynamic Tariffs** and select a tariff.
+
+{% else %}
+
+## Configuration
+
+Open **Settings → Devices & services → Add integration**, search for
+**Swiss Dynamic Tariffs** and select the required provider/tariff combination.
 
 {% endif %}
 
-## Configuration is done in the UI
+## More information
 
-<!---->
-
-## Credits
-
-This project was generated from [@oncleben31](https://github.com/oncleben31)'s [Home Assistant Custom Component Cookiecutter](https://github.com/oncleben31/cookiecutter-homeassistant-custom-component) template.
-
-Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [integration_blueprint][integration_blueprint] template
-
----
-
-[integration_blueprint]: https://github.com/custom-components/integration_blueprint
-[buymecoffee]: https://www.buymeacoffee.com/ludeeus
-[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/ehnid/swiss-dynamic-tariffs.svg?style=for-the-badge
-[commits]: https://github.com/ehnid/swiss-dynamic-tariffs/commits/main
-[hacs]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
-[discord]: https://discord.gg/Qa5fW2R
-[discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
-[forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
-[forum]: https://community.home-assistant.io/
-[license]: https://github.com/ehnid/swiss-dynamic-tariffs/blob/main/LICENSE
-[license-shield]: https://img.shields.io/github/license/ehnid/swiss-dynamic-tariffs.svg?style=for-the-badge
-[maintenance-shield]: https://img.shields.io/badge/maintainer-%40ehnid-blue.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/ehnid/swiss-dynamic-tariffs.svg?style=for-the-badge
-[releases]: https://github.com/ehnid/swiss-dynamic-tariffs/releases
-[user_profile]: https://github.com/ehnid
+- [Complete user guide](README.md)
+- [Architecture](docs/architecture.md)
+- [Contributing](CONTRIBUTING.md)
+- [MIT License](LICENSE)

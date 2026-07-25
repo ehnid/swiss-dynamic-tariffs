@@ -143,6 +143,11 @@ def test_sensor_without_data():
     )
 
     assert sensor.native_value is None
+    assert sensor.extra_state_attributes == {
+        "tariff_component": "electricity",
+        "tariff_entry_id": "test",
+        "tariff_role": SENSOR_CURRENT_PRICE,
+    }
 
 
 def test_sensor_attributes():
@@ -195,6 +200,9 @@ def test_sensor_next_price():
 
     assert sensor.native_value == 0.40
     assert sensor.extra_state_attributes["start"] == FakeCoordinator.next_period.start
+    assert sensor.extra_state_attributes["tariff_component"] == "electricity"
+    assert sensor.extra_state_attributes["tariff_entry_id"] == "test"
+    assert sensor.extra_state_attributes["tariff_role"] == SENSOR_NEXT_PRICE
 
 
 def test_forecast_sensor_exposes_all_future_quarter_hours():
@@ -223,6 +231,7 @@ def test_forecast_sensor_exposes_all_future_quarter_hours():
         "available_from": FakeCoordinator.next_period.start,
         "available_until": FakeCoordinator.most_expensive.end,
         "period_count": 3,
+        "tariff_entry_id": "test",
         "prices": [
             {
                 "start": FakeCoordinator.next_period.start.isoformat(),
@@ -339,7 +348,11 @@ def test_sensor_average_price():
 
     assert sensor.native_value == 0.20
     # An average has no single start/end quarter hour to report.
-    assert sensor.extra_state_attributes is None
+    assert sensor.extra_state_attributes == {
+        "tariff_component": "electricity",
+        "tariff_entry_id": "test",
+        "tariff_role": SENSOR_AVERAGE_PRICE,
+    }
 
 
 def test_entity_descriptions_cover_all_tariff_types_and_kinds():

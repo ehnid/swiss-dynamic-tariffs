@@ -1,117 +1,68 @@
-# AI Agent Instructions for Swiss Dynamic Tariffs
+# AI agent guide for Swiss Dynamic Tariffs
 
-This is a Home Assistant custom component providing dynamic tariff pricing data from Swiss energy providers. This document helps AI agents understand the codebase structure and conventions.
+Swiss Dynamic Tariffs is a Home Assistant custom integration for
+quarter-hourly prices from Swiss energy providers. Preserve the provider data
+as published: normalize its shape and units, but do not synthesize missing
+prices or extend a provider's forecast horizon.
 
-## Quick Start
+## Start here
 
-**Testing:** `pytest --cov=custom_components.swiss_dynamic_tariffs`
-**Code style:** `black .` + `isort .` (or use `pre-commit run --all-files`)
-**Dev container:** Available in VS Code with tasks to run Home Assistant locally
+- Architecture and design rationale: [`docs/architecture.md`](docs/architecture.md)
+- Contribution and verification workflow:
+  [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- Tests: `pytest --cov=custom_components.swiss_dynamic_tariffs`
+- All repository checks: `pre-commit run --all-files`
+- Frontend syntax:
 
-## Architecture Overview
+  ```bash
+  node --check custom_components/swiss_dynamic_tariffs/frontend/swiss-dynamic-tariffs.js
+  ```
 
-### Core Pattern: Provider System
+The VS Code development container includes Home Assistant, pytest, Ruff,
+Prettier, Node.js and pre-commit.
 
-The integration follows an **extensible provider pattern**:
+## Architecture
 
-- **Base class:** [`providers/base.py`](custom_components/swiss_dynamic_tariffs/providers/base.py) — Abstract `TariffProvider` interface
-- **Implementations:** [`providers/bkw.py`](custom_components/swiss_dynamic_tariffs/providers/bkw.py) and others
-- **Registry:** [`providers/registry.py`](custom_components/swiss_dynamic_tariffs/providers/registry.py) — Dynamic provider lookup
+The integration uses an extensible provider system:
 
-To add a new provider: Implement the `TariffProvider` interface and register it in `registry.py`.
+- `providers/base.py` defines the provider interface.
+- Provider-specific modules fetch or construct tariff periods.
+- `providers/registry.py` maps configuration-flow options to providers.
+- `coordinator.py` refreshes and caches normalized data.
+- `sensor.py` exposes current, statistical and forecast entities.
+- `frontend/swiss-dynamic-tariffs.js` renders the automatic sidebar dashboard.
 
-### Data Flow
+`models.py` owns shared data contracts such as `TariffPeriod`. The dashboard's
+history/forecast merge is documented in
+[`ADR 0001`](docs/adr/0001-dashboard-time-series.md).
 
-1. **Configuration:** User selects provider in config flow ([`config_flow.py`](custom_components/swiss_dynamic_tariffs/config_flow.py))
-2. **Setup:** [`__init__.py`](custom_components/swiss_dynamic_tariffs/__init__.py) instantiates the chosen provider
-3. **Updates:** [`coordinator.py`](custom_components/swiss_dynamic_tariffs/coordinator.py) — Uses Home Assistant's `DataUpdateCoordinator` to fetch and cache tariff data at intervals
-4. **Entities:** [`sensor.py`](custom_components/swiss_dynamic_tariffs/sensor.py) — Creates Home Assistant sensor entities that expose tariff data
+## Implementation conventions
 
-### Key Models
+- All network and Home Assistant I/O is asynchronous.
+- Use `from __future__ import annotations` and complete type annotations.
+- Put shared constants in `const.py`.
+- Log through a module-level `_LOGGER = logging.getLogger(__name__)`.
+- Keep entity unique IDs backwards compatible.
+- Translate user-facing sensor and dashboard text into German, English, French
+  and Italian.
+- Explain non-obvious provider parsing and frontend state decisions in code.
+- Add or update tests whenever behaviour changes.
 
-[`models.py`](custom_components/swiss_dynamic_tariffs/models.py) defines data structures like `TariffPeriod`.
+## Adding a provider or tariff
 
-## File Organization
+1. Implement `TariffProvider` in `providers/`.
+2. Register every separately selectable tariff in `providers/registry.py`.
+3. Add the configuration-flow label to `strings.json` and every translation.
+4. Test parsing, units, period boundaries, component names and error handling.
+5. Update the supported-tariff tables in `README.md` and `info.md`.
 
-```
-custom_components/swiss_dynamic_tariffs/
-├── __init__.py           # Integration setup & async_setup_entry
-├── config_flow.py        # UI configuration flow
-├── coordinator.py        # DataUpdateCoordinator for data fetching
-├── api.py                # Legacy API client (consider using providers directly)
-├── sensor.py             # Sensor entity definitions
-├── entity.py             # Base entity class
-├── models.py             # Data models (TariffPeriod, etc.)
-├── const.py              # Constants (DOMAIN, PLATFORMS, defaults)
-├── exceptions.py         # Custom exceptions
-├── manifest.json         # Integration metadata
-├── providers/
-│   ├── base.py          # TariffProvider abstract base class
-│   ├── registry.py      # Provider registry & lookup
-│   └── bkw.py           # BKW provider implementation
-└── translations/        # Multi-language strings
-```
+If a source changes its public schema, fail with a clear provider error instead
+of silently returning plausible but incorrect prices.
 
-## Development Conventions
+## Documentation decisions
 
-### Async/Await
-
-All network I/O and Home Assistant interactions are async. Use `async def` for coordinator updates and provider methods.
-
-### Typing
-
-Type hints are used throughout. Use `from __future__ import annotations` for forward references.
-
-### Logging
-
-- Import: `import logging` and `_LOGGER = logging.getLogger(__name__)`
-- Use `_LOGGER.debug()`, `.info()`, `.warning()`, `.error()`
-
-### Constants
-
-All hardcoded values go in [`const.py`](custom_components/swiss_dynamic_tariffs/const.py) with the `DOMAIN` and `PLATFORMS` defined there.
-
-### Testing
-
-Tests are in the `tests/` folder using pytest. See [CONTRIBUTING.md](CONTRIBUTING.md) for test execution.
-
-## Common Tasks
-
-### Adding a new provider
-
-1. Create `providers/my_provider.py` inheriting from `TariffProvider`
-2. Implement `async_get_tariffs()` returning `list[TariffPeriod]`
-3. Register in [`providers/registry.py`](custom_components/swiss_dynamic_tariffs/providers/registry.py)
-4. Add to config flow choices in [`config_flow.py`](custom_components/swiss_dynamic_tariffs/config_flow.py)
-
-### Adding a new sensor
-
-1. Define the sensor class in [`sensor.py`](custom_components/swiss_dynamic_tariffs/sensor.py) inheriting from `CoordinatorEntity`
-2. Reference the coordinator data via `self.coordinator.data`
-3. Update `PLATFORMS` in [`const.py`](custom_components/swiss_dynamic_tariffs/const.py) if adding a new platform
-
-### Updating translations
-
-Add/update keys in `translations/{lang}.json` files. See CONTRIBUTING.md for details.
-
-## Key Dependencies
-
-- **homeassistant** — Home Assistant core
-- **aiohttp** — Async HTTP client (via Home Assistant)
-- **pytest-homeassistant-custom-component** — Testing utilities
-
-## Code Style & Linting
-
-Enforced via pre-commit hooks:
-
-- **Black** — Code formatting
-- **isort** — Import sorting
-- **flake8** — Linting (see `setup.cfg` for ignore rules)
-
-Configuration in [`setup.cfg`](setup.cfg): max line length 88, isort configured for Home Assistant conventions.
-
-## Links
-
-- [Contribution Guidelines](CONTRIBUTING.md)
-- [Home Assistant Developer Docs](https://developers.home-assistant.io)
-- [Integration Blueprint Template](https://github.com/custom-components/integration_blueprint)
+Update `docs/architecture.md` when responsibilities or data flow change. Add an
+Architecture Decision Record under `docs/adr/` for decisions that affect public
+data contracts, entity identity, provider behaviour or dashboard data sources.
+An ADR records the context, alternatives, decision and consequences so later
+changes do not accidentally undo an intentional trade-off.

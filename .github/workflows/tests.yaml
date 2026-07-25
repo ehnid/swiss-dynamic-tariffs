@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - master
-      - dev
   pull_request:
   schedule:
     - cron: "0 0 * * *"
@@ -74,9 +72,6 @@ jobs:
         run: |
           pip install --constraint=.github/workflows/constraints.txt pip
           pip install -r requirements_test.txt
-      - name: Install pre-commit
-        run: |
-          pip install "pre-commit>=4.0.0"
       - name: Tests suite
         run: |
           pytest \
