@@ -30,16 +30,19 @@ periods and continue working when Recorder is disabled.
    expose `tariff_component` and `tariff_role`.
 4. The frontend discovers current-price sensors through these stable attributes,
    not through entity names.
-5. Historical and forecast periods are merged by exact start/end timestamp.
-   Forecast values overwrite historical values for the same component and
-   period.
-6. History requests include non-significant state changes so equal consecutive
+5. Historical states carrying period attributes retain their exact boundaries.
+   Legacy states recorded before those attributes existed are reconstructed
+   from their state-change timestamps on a quarter-hour grid.
+6. Historical and forecast periods are merged by exact start/end timestamp.
+   Exact attributes and forecast values overwrite inferred values for the same
+   component and period.
+7. History requests include non-significant state changes so equal consecutive
    prices are not lost.
-7. Calendar days are calculated in Home Assistant's configured timezone.
-8. Day navigation is derived from all available dates and has no fixed
+8. Calendar days are calculated in Home Assistant's configured timezone.
+9. Day navigation is derived from all available dates and has no fixed
    24-hour limit.
-9. History is an optional enhancement; failures fall back to forecast-only
-   rendering.
+10. History is an optional enhancement; failures fall back to forecast-only
+    rendering.
 
 ## Why this location
 
@@ -89,6 +92,7 @@ external cards cannot reliably know the integration-specific merge rules.
 ### Positive
 
 - The chart can show the full recorded current day.
+- History recorded before version 0.5.0 remains usable without a migration.
 - Restart-safe history is delegated to Home Assistant.
 - User-renamed entities continue to work.
 - Forecasts longer than 24 hours appear automatically.

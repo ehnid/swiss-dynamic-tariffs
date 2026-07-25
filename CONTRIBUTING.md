@@ -61,6 +61,11 @@ For frontend changes, also verify JavaScript syntax:
 node --check custom_components/swiss_dynamic_tariffs/frontend/swiss-dynamic-tariffs.js
 ```
 
+When publishing a frontend change, update both the version in `manifest.json`
+and `FRONTEND_VERSION` in the JavaScript file. Tests require them to remain
+synchronized because the version controls both browser caching and the
+automatic panel's custom-element name.
+
 ## Adding or changing a provider
 
 The provider system is intentionally isolated from Home Assistant entities:

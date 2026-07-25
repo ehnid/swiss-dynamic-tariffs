@@ -130,7 +130,8 @@ Each card provides:
 - all currently published future periods;
 - one-click navigation through every available forecast day;
 - minimum, maximum and current/next values;
-- a current-time marker and exact values on hover;
+- a current-time marker, Y-axis labels with two decimal places and exact values
+  on hover;
 - an expandable table that remains open during data refreshes.
 
 Today is selected initially. The selection remains unchanged during updates. If
@@ -143,6 +144,11 @@ The forecast API cannot reconstruct prices that have already disappeared from a
 provider response. For today's past values, the card therefore reads Home
 Assistant's history for the matching **Current price** sensors and combines
 those records with the forecast by exact start/end timestamp.
+
+States recorded by releases before 0.5.0 do not contain exact tariff-period
+attributes. The dashboard reconstructs those older values from their Recorder
+timestamps on a quarter-hour grid; newer exact period boundaries take
+precedence wherever available.
 
 This requires Home Assistant Recorder/History to record those sensors. Without
 history data, the card still displays every available forecast period.
@@ -168,9 +174,11 @@ under **Settings → Dashboards → Add dashboard**.
 
 ### A dashboard update is not visible
 
-Update the integration in HACS and restart Home Assistant. Release versions are
-also used as frontend cache keys, so a normal restart should load the matching
-JavaScript bundle.
+Update the integration in HACS and restart Home Assistant. The automatic
+sidebar panel uses a release-specific component name and frontend cache key. A
+manually added card may additionally require a browser refresh or a reload of
+the Home Assistant Companion app because browsers cannot replace an already
+registered custom element in a running page.
 
 ### No past values are shown
 

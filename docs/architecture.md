@@ -130,10 +130,13 @@ For each card:
 1. Forecast periods are parsed from the forecast sensor.
 2. Current-price sensors belonging to the same `tariff_entry_id` are found.
 3. Home Assistant History is queried for the current day.
-4. Historical states are converted using their recorded `start`/`end`
-   attributes.
-5. History and forecast periods are merged by exact start/end timestamp.
-6. The result is split into calendar days in the configured Home Assistant
+4. Historical states with recorded `start`/`end` attributes retain those exact
+   boundaries.
+5. Older states without period attributes are expanded from their Recorder
+   timestamps onto the quarter-hour grid. This preserves history written before
+   the linkage attributes were introduced in version 0.5.0.
+6. Exact history and forecast periods are merged by start/end timestamp.
+7. The result is split into calendar days in the configured Home Assistant
    timezone.
 
 The later data source wins during a merge. Forecast data is applied after
@@ -160,9 +163,11 @@ Today and tomorrow are always available as navigation choices. Additional
 buttons are created for every further date present in the provider data; there
 is no hard-coded 24-hour forecast limit.
 
-The chart deliberately has a maximum width and height. A larger SVG did not add
-information but reduced the readability of quarter-hour steps and labels on
-wide dashboards.
+The chart deliberately has a 620-pixel drawing-width limit and a 230-pixel
+desktop height. A larger SVG did not add information but reduced the
+readability of quarter-hour steps and labels on wide dashboards. Y-axis tick
+labels use exactly two decimal places; tooltips and table cells retain the
+provider precision.
 
 ## Frontend state preservation
 
@@ -187,8 +192,18 @@ markup, preventing automatic updates from resetting the interface.
 
 The JavaScript file is served through Home Assistant's static-path support. The
 query-string cache key is read from `manifest.json`, so every integration
-version loads a matching frontend bundle. The version must be increased for
-each published code change.
+version loads a matching frontend bundle.
+
+The automatic sidebar panel and its internal card also use a component name
+derived from that version. Browsers cannot redefine an existing custom element,
+so versioning the element prevents a Home Assistant reconnect from silently
+retaining the previous graph implementation. The public custom-card tag remains
+stable for Lovelace compatibility and may require a page reload after an
+upgrade.
+
+The manifest version, JavaScript `FRONTEND_VERSION` and panel component name
+must be changed together for each published frontend change. A regression test
+enforces this contract.
 
 ## Validation
 

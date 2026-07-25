@@ -19,7 +19,7 @@ PLATFORMS: list[str] = ["sensor"]
 
 CURRENCY_PER_KWH = "CHF/kWh"
 FRONTEND_URL: Final = f"/{DOMAIN}/swiss-dynamic-tariffs.js"
-PANEL_COMPONENT_NAME: Final = "swiss-dynamic-tariffs-panel"
+PANEL_COMPONENT_NAME: Final = f"swiss-dynamic-tariffs-panel-{VERSION.replace('.', '-')}"
 PANEL_URL_PATH: Final = "swiss-dynamic-tariffs-panel"
 
 

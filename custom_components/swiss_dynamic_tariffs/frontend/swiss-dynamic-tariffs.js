@@ -1,7 +1,14 @@
 const CARD_TAG = "swiss-dynamic-tariffs-card";
 const CARD_TYPE = `custom:${CARD_TAG}`;
 const STRATEGY_TYPE = "swiss-dynamic-tariffs";
+const FRONTEND_VERSION = "0.5.1";
+const PANEL_TAG = `swiss-dynamic-tariffs-panel-${FRONTEND_VERSION.replaceAll(
+  ".",
+  "-",
+)}`;
+const PANEL_CARD_TAG = `${PANEL_TAG}-card`;
 const FORECAST_ATTRIBUTES = ["prices", "available_from", "available_until"];
+const QUARTER_HOUR_MS = 15 * 60 * 1000;
 
 const COMPONENTS = [
   {
@@ -282,8 +289,11 @@ function parseHistoryPeriods(
   const liveStates = Object.values(componentEntities)
     .map((entityId) => currentStates?.[entityId])
     .filter(Boolean);
-  const periods = new Map();
+  const exactPeriods = new Map();
+  const historyEvents = new Map();
   const now = Date.now();
+  const dayStart = calendarDateStart(todayKey, timeZone);
+  const dayEnd = calendarDateStart(shiftCalendarDateKey(todayKey, 1), timeZone);
 
   for (const state of [...recordedStates, ...liveStates]) {
     const component = entityComponents[state.entity_id];
@@ -291,6 +301,17 @@ function parseHistoryPeriods(
     const startTime = Date.parse(attributes.start);
     const endTime = Date.parse(attributes.end);
     const value = Number(state.state);
+    const updatedTime = Date.parse(state.last_updated || state.last_changed);
+
+    if (component && Number.isFinite(updatedTime)) {
+      const events = historyEvents.get(component) || [];
+      events.push({
+        timestamp: updatedTime,
+        value: Number.isFinite(value) ? value : null,
+      });
+      historyEvents.set(component, events);
+    }
+
     if (
       !component ||
       !Number.isFinite(startTime) ||
@@ -298,24 +319,79 @@ function parseHistoryPeriods(
       !Number.isFinite(value) ||
       startTime > now ||
       endTime <= startTime ||
-      calendarDateKey(startTime, timeZone) !== todayKey
+      startTime >= dayEnd ||
+      endTime <= dayStart
     ) {
       continue;
     }
 
     const key = `${startTime}:${endTime}`;
-    const period = periods.get(key) || {
+    const period = exactPeriods.get(key) || {
       start: attributes.start,
       end: attributes.end,
       startTime,
       endTime,
     };
     period[component] = value;
-    periods.set(key, period);
+    exactPeriods.set(key, period);
   }
 
-  return [...periods.values()].sort(
-    (left, right) => left.startTime - right.startTime,
+  /*
+   * Releases before 0.5.0 did not record exact period boundaries. Reconstruct
+   * their held sensor states on a quarter-hour grid so an update does not make
+   * all earlier values from the same day disappear. Exact attributes, when
+   * present, are merged afterwards and therefore remain authoritative.
+   */
+  const inferredPeriods = new Map();
+  const historyEnd = Math.min(now, dayEnd);
+  for (const [component, events] of historyEvents) {
+    events.sort((left, right) => left.timestamp - right.timestamp);
+    let eventIndex = 0;
+    let activeValue = null;
+
+    while (
+      eventIndex < events.length &&
+      events[eventIndex].timestamp < dayStart
+    ) {
+      activeValue = events[eventIndex].value;
+      eventIndex += 1;
+    }
+
+    for (
+      let startTime = dayStart;
+      startTime < historyEnd;
+      startTime += QUARTER_HOUR_MS
+    ) {
+      while (
+        eventIndex < events.length &&
+        Math.floor(events[eventIndex].timestamp / QUARTER_HOUR_MS) *
+          QUARTER_HOUR_MS <=
+          startTime
+      ) {
+        activeValue = events[eventIndex].value;
+        eventIndex += 1;
+      }
+
+      if (!Number.isFinite(activeValue)) {
+        continue;
+      }
+
+      const endTime = Math.min(startTime + QUARTER_HOUR_MS, dayEnd);
+      const key = `${startTime}:${endTime}`;
+      const period = inferredPeriods.get(key) || {
+        start: new Date(startTime).toISOString(),
+        end: new Date(endTime).toISOString(),
+        startTime,
+        endTime,
+      };
+      period[component] = activeValue;
+      inferredPeriods.set(key, period);
+    }
+  }
+
+  return mergePeriods(
+    [...inferredPeriods.values()],
+    [...exactPeriods.values()],
   );
 }
 
@@ -355,6 +431,50 @@ function shiftCalendarDateKey(dateKey, days) {
     String(shifted.getUTCMonth() + 1).padStart(2, "0"),
     String(shifted.getUTCDate()).padStart(2, "0"),
   ].join("-");
+}
+
+/**
+ * Resolve midnight for a Home Assistant calendar date in its configured zone.
+ *
+ * Date.parse("YYYY-MM-DD") always means UTC, which is not midnight in
+ * Europe/Zurich. Iterating the formatted wall-clock difference avoids a
+ * dependency on the browser's own timezone and also handles DST transitions.
+ */
+function calendarDateStart(dateKey, timeZone) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const targetWallTime = Date.UTC(year, month - 1, day);
+  const formatter = new Intl.DateTimeFormat("en", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  });
+  let timestamp = targetWallTime;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const parts = formatter.formatToParts(new Date(timestamp));
+    const value = (type) =>
+      Number(parts.find((part) => part.type === type)?.value);
+    const representedWallTime = Date.UTC(
+      value("year"),
+      value("month") - 1,
+      value("day"),
+      value("hour"),
+      value("minute"),
+      value("second"),
+    );
+    const correction = targetWallTime - representedWallTime;
+    timestamp += correction;
+    if (correction === 0) {
+      break;
+    }
+  }
+
+  return timestamp;
 }
 
 function calendarDayDifference(startDateKey, endDateKey) {
@@ -461,6 +581,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
     this._historyPeriods = [];
     this._historyLoadingKey = undefined;
     this._historyLoadedKey = undefined;
+    this._historyRetryAfter = 0;
     this._renderedHostWidth = undefined;
     this._resizeObserver = new ResizeObserver(([entry]) => {
       const hostWidth = Math.round(entry.contentRect.width);
@@ -506,6 +627,13 @@ class SwissDynamicTariffsCard extends HTMLElement {
     return new Intl.NumberFormat(languageFromHass(this._hass), {
       minimumFractionDigits: 3,
       maximumFractionDigits: 5,
+    }).format(value);
+  }
+
+  _formatAxisPrice(value) {
+    return new Intl.NumberFormat(languageFromHass(this._hass), {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(value);
   }
 
@@ -570,14 +698,20 @@ class SwissDynamicTariffsCard extends HTMLElement {
     const todayKey = calendarDateKey(Date.now(), timeZone);
     const currentPeriodKeys = entityIds.map((entityId) => {
       const currentState = this._hass.states[entityId];
-      return `${entityId}:${currentState?.attributes?.start || ""}`;
+      return `${entityId}:${
+        currentState?.attributes?.start ||
+        currentState?.last_updated ||
+        currentState?.state ||
+        ""
+      }`;
     });
     const requestKey = `${todayKey}:${currentPeriodKeys.join("|")}`;
     // Home Assistant pushes state updates frequently. Reload history only when
     // the date, linked entities or active quarter-hour changes.
     if (
       requestKey === this._historyLoadingKey ||
-      requestKey === this._historyLoadedKey
+      requestKey === this._historyLoadedKey ||
+      Date.now() < this._historyRetryAfter
     ) {
       return;
     }
@@ -591,21 +725,21 @@ class SwissDynamicTariffsCard extends HTMLElement {
         this._historyPeriods = periods;
         this._historyLoadedKey = requestKey;
         this._historyLoadingKey = undefined;
+        this._historyRetryAfter = 0;
         this._render();
       })
-      .catch(() => {
+      .catch((error) => {
         if (this._historyLoadingKey === requestKey) {
-          this._historyLoadedKey = requestKey;
           this._historyLoadingKey = undefined;
+          this._historyRetryAfter = Date.now() + 60_000;
         }
+        console.warn("Swiss Dynamic Tariffs could not load history", error);
       });
   }
 
   async _loadHistory(componentEntities, todayKey, timeZone) {
     const now = new Date();
-    // Twenty-seven hours covers the complete local day even across a 25-hour
-    // daylight-saving transition. Calendar filtering below removes spillover.
-    const historyStart = new Date(now.getTime() - 27 * 60 * 60 * 1000);
+    const historyStart = new Date(calendarDateStart(todayKey, timeZone));
     const entityIds = Object.values(componentEntities);
     const path =
       `history/period/${encodeURIComponent(historyStart.toISOString())}` +
@@ -784,10 +918,10 @@ class SwissDynamicTariffsCard extends HTMLElement {
     const compact = hostWidth > 0 && hostWidth <= 500;
     const horizontalPadding = compact ? 24 : 44;
     const width = Math.min(
-      700,
+      620,
       Math.max(320, (hostWidth || 804) - horizontalPadding),
     );
-    const height = compact ? 235 : 260;
+    const height = compact ? 210 : 230;
     const plot = compact
       ? { left: 62, right: 12, top: 24, bottom: 54 }
       : { left: 78, right: 20, top: 24, bottom: 58 };
@@ -845,7 +979,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
           }" y2="${y}"></line>
           <text class="axis-tick y-tick" x="${plot.left - 12}" y="${
             y + 4
-          }">${escapeHtml(this._formatPrice(tick))}</text>
+          }">${escapeHtml(this._formatAxisPrice(tick))}</text>
         `;
       })
       .join("");
@@ -1406,7 +1540,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
       .chart-wrap {
         position: relative;
         width: 100%;
-        max-width: 740px;
+        max-width: 660px;
         margin: 0 auto;
       }
 
@@ -1414,7 +1548,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
         display: block;
         width: 100%;
         height: auto;
-        max-height: 260px;
+        max-height: 230px;
         overflow: visible;
       }
 
@@ -1671,7 +1805,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
         }
 
         .chart {
-          max-height: 235px;
+          max-height: 210px;
         }
       }
     `;
@@ -1843,7 +1977,7 @@ class SwissDynamicTariffsPanel extends HTMLElement {
 
     const cardContainer = this.shadowRoot.querySelector(".cards");
     for (const state of entities) {
-      const card = document.createElement(CARD_TAG);
+      const card = document.createElement(PANEL_CARD_TAG);
       card.setConfig({ entity: state.entity_id });
       card.hass = this._hass;
       cardContainer.append(card);
@@ -1948,11 +2082,12 @@ if (!customElements.get(CARD_TAG)) {
   customElements.define(CARD_TAG, SwissDynamicTariffsCard);
 }
 
-if (!customElements.get("swiss-dynamic-tariffs-panel")) {
-  customElements.define(
-    "swiss-dynamic-tariffs-panel",
-    SwissDynamicTariffsPanel,
-  );
+if (!customElements.get(PANEL_CARD_TAG)) {
+  customElements.define(PANEL_CARD_TAG, SwissDynamicTariffsCard);
+}
+
+if (!customElements.get(PANEL_TAG)) {
+  customElements.define(PANEL_TAG, SwissDynamicTariffsPanel);
 }
 
 if (!customElements.get("swiss-dynamic-tariffs-card-editor")) {

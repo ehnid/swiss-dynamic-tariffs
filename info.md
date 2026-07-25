@@ -39,7 +39,10 @@ all published future quarter-hour periods.
 The automatic sidebar dashboard provides:
 
 - a compact chart with labelled time and price axes;
-- today's recorded current-price values combined with the forecast;
+- today's recorded current-price values, including legacy Recorder states,
+  combined with the forecast;
+- Y-axis labels limited to two decimal places while detail values retain their
+  precision;
 - all dates published by the provider, including forecasts beyond 24 hours;
 - exact hover values and minimum/maximum annotations;
 - an expandable quarter-hour table that remains open during updates.
