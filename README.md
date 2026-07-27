@@ -125,7 +125,9 @@ forecast.
 
 Each card provides:
 
-- a compact chart limited in width instead of stretching across the whole view;
+- a responsive tariff frame whose desktop maximum is 40% of the current screen
+  width and which uses the full available width on phones;
+- a chart that scales with its tariff frame instead of using a fixed size;
 - today's recorded prices up to the current quarter-hour;
 - all currently published future periods;
 - one-click navigation through every available forecast day;

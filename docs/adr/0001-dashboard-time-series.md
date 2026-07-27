@@ -116,3 +116,5 @@ external cards cannot reliably know the integration-specific merge rules.
 - Do not make Recorder a hard integration dependency.
 - Preserve exact timezone-aware period boundaries.
 - Preserve forecast-over-history precedence for duplicate periods.
+- Keep public and versioned internal custom-element constructors distinct.
+- Derive chart dimensions from the rendered tariff-frame width.

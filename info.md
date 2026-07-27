@@ -38,7 +38,9 @@ all published future quarter-hour periods.
 
 The automatic sidebar dashboard provides:
 
-- a compact chart with labelled time and price axes;
+- a responsive tariff frame capped at 40% of the current screen width on
+  desktops and using the full available width on phones;
+- a chart with labelled time and price axes that follows the frame size;
 - today's recorded current-price values, including legacy Recorder states,
   combined with the forecast;
 - Y-axis labels limited to two decimal places while detail values retain their

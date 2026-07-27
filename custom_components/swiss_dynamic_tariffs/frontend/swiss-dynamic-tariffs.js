@@ -1,7 +1,7 @@
 const CARD_TAG = "swiss-dynamic-tariffs-card";
 const CARD_TYPE = `custom:${CARD_TAG}`;
 const STRATEGY_TYPE = "swiss-dynamic-tariffs";
-const FRONTEND_VERSION = "0.5.1";
+const FRONTEND_VERSION = "0.5.2";
 const PANEL_TAG = `swiss-dynamic-tariffs-panel-${FRONTEND_VERSION.replaceAll(
   ".",
   "-",
@@ -559,6 +559,31 @@ function timeTicks(minimum, maximum, count) {
   );
 }
 
+function chartDimensions(measuredHostWidth) {
+  // The first render happens before an automatic panel card is attached.
+  // A moderate fallback is replaced immediately by ResizeObserver.
+  const hostWidth = measuredHostWidth > 0 ? measuredHostWidth : 560;
+  const compact = hostWidth <= 600;
+  const horizontalPadding = compact ? 24 : 44;
+  const width = Math.max(280, hostWidth - horizontalPadding);
+  const height = Math.round(
+    Math.max(
+      compact ? 240 : 250,
+      Math.min(compact ? 300 : 320, width * (compact ? 0.72 : 0.55)),
+    ),
+  );
+  const plot = compact
+    ? { left: 62, right: 12, top: 24, bottom: 54 }
+    : { left: 78, right: 20, top: 24, bottom: 58 };
+
+  return { compact, width, height, plot };
+}
+
+function desktopCardWidth(screenWidth) {
+  const width = Number(screenWidth);
+  return Number.isFinite(width) && width > 0 ? Math.round(width * 0.4) : 480;
+}
+
 class SwissDynamicTariffsCard extends HTMLElement {
   static getConfigElement() {
     return document.createElement("swiss-dynamic-tariffs-card-editor");
@@ -583,24 +608,39 @@ class SwissDynamicTariffsCard extends HTMLElement {
     this._historyLoadedKey = undefined;
     this._historyRetryAfter = 0;
     this._renderedHostWidth = undefined;
-    this._resizeObserver = new ResizeObserver(([entry]) => {
-      const hostWidth = Math.round(entry.contentRect.width);
-      if (
-        hostWidth > 0 &&
-        Math.abs(hostWidth - (this._renderedHostWidth || 0)) >= 16
-      ) {
-        this._renderedHostWidth = hostWidth;
-        this._render();
-      }
-    });
+    this._resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver(([entry]) => {
+            const hostWidth = Math.round(entry.contentRect.width);
+            if (
+              hostWidth > 0 &&
+              Math.abs(hostWidth - (this._renderedHostWidth || 0)) >= 8
+            ) {
+              this._renderedHostWidth = hostWidth;
+              this._render();
+            }
+          });
   }
 
   connectedCallback() {
-    this._resizeObserver.observe(this);
+    if (this._resizeObserver) {
+      this._resizeObserver.observe(this);
+      return;
+    }
+
+    /*
+     * Older companion-app WebViews may not expose ResizeObserver. Measure once
+     * after attachment so the card remains usable instead of failing entirely.
+     */
+    requestAnimationFrame(() => {
+      this._renderedHostWidth = Math.round(this.getBoundingClientRect().width);
+      this._render();
+    });
   }
 
   disconnectedCallback() {
-    this._resizeObserver.disconnect();
+    this._resizeObserver?.disconnect();
   }
 
   setConfig(config) {
@@ -913,18 +953,9 @@ class SwissDynamicTariffsCard extends HTMLElement {
       return;
     }
 
-    const hostWidth =
+    const measuredHostWidth =
       this._renderedHostWidth || Math.round(this.getBoundingClientRect().width);
-    const compact = hostWidth > 0 && hostWidth <= 500;
-    const horizontalPadding = compact ? 24 : 44;
-    const width = Math.min(
-      620,
-      Math.max(320, (hostWidth || 804) - horizontalPadding),
-    );
-    const height = compact ? 210 : 230;
-    const plot = compact
-      ? { left: 62, right: 12, top: 24, bottom: 54 }
-      : { left: 78, right: 20, top: 24, bottom: 58 };
+    const { compact, width, height, plot } = chartDimensions(measuredHostWidth);
     const plotWidth = width - plot.left - plot.right;
     const plotHeight = height - plot.top - plot.bottom;
     const xMinimum = periods[0].startTime;
@@ -1353,7 +1384,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
 
       ha-card {
         overflow: hidden;
-        padding: 22px;
+        padding: 18px;
         background:
           radial-gradient(
             circle at 100% 0%,
@@ -1368,7 +1399,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
         align-items: flex-start;
         justify-content: space-between;
         gap: 16px;
-        margin-bottom: 18px;
+        margin-bottom: 14px;
       }
 
       .card-header > ha-icon {
@@ -1463,7 +1494,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
 
       .summary-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 9px;
         margin-bottom: 16px;
       }
@@ -1516,7 +1547,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
       .legend {
         display: flex;
         flex-wrap: wrap;
-        max-width: 620px;
+        width: 100%;
         box-sizing: border-box;
         gap: 8px 14px;
         margin: 0 auto 5px;
@@ -1540,7 +1571,6 @@ class SwissDynamicTariffsCard extends HTMLElement {
       .chart-wrap {
         position: relative;
         width: 100%;
-        max-width: 660px;
         margin: 0 auto;
       }
 
@@ -1548,7 +1578,6 @@ class SwissDynamicTariffsCard extends HTMLElement {
         display: block;
         width: 100%;
         height: auto;
-        max-height: 230px;
         overflow: visible;
       }
 
@@ -1705,6 +1734,8 @@ class SwissDynamicTariffsCard extends HTMLElement {
         display: flex;
         align-items: center;
         gap: 8px;
+        min-height: 44px;
+        box-sizing: border-box;
         padding: 15px 3px 2px;
         color: var(--primary-color);
         font-size: 0.84rem;
@@ -1789,11 +1820,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
 
       @media (max-width: 700px) {
         ha-card {
-          padding: 17px 12px;
-        }
-
-        .summary-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
+          padding: 14px 10px;
         }
 
         .day-navigation {
@@ -1804,13 +1831,21 @@ class SwissDynamicTariffsCard extends HTMLElement {
           padding-left: 52px;
         }
 
-        .chart {
-          max-height: 210px;
+        .card-header > ha-icon {
+          --mdc-icon-size: 28px;
+          padding: 8px;
         }
       }
     `;
   }
 }
+
+/*
+ * The Custom Elements registry forbids registering the same constructor under
+ * two names. A distinct subclass keeps the public Lovelace card tag stable
+ * while allowing the automatic panel card to be versioned for cache busting.
+ */
+class SwissDynamicTariffsPanelCard extends SwissDynamicTariffsCard {}
 
 class SwissDynamicTariffsPanel extends HTMLElement {
   constructor() {
@@ -1821,6 +1856,24 @@ class SwissDynamicTariffsPanel extends HTMLElement {
     this._narrow = false;
     this._renderedKey = undefined;
     this._cards = new Map();
+    this._handleWindowResize = () => this._updateResponsiveCardWidth();
+  }
+
+  connectedCallback() {
+    this._updateResponsiveCardWidth();
+    window.addEventListener("resize", this._handleWindowResize);
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener("resize", this._handleWindowResize);
+  }
+
+  _updateResponsiveCardWidth() {
+    const screenWidth = window.screen?.width || window.innerWidth;
+    this.style.setProperty(
+      "--sdt-desktop-card-width",
+      `${desktopCardWidth(screenWidth)}px`,
+    );
   }
 
   set hass(hass) {
@@ -1880,7 +1933,7 @@ class SwissDynamicTariffsPanel extends HTMLElement {
 
         main {
           width: 100%;
-          max-width: 1180px;
+          max-width: 1800px;
           margin: 0 auto;
         }
 
@@ -1913,9 +1966,18 @@ class SwissDynamicTariffsPanel extends HTMLElement {
         }
 
         .cards {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr);
-          gap: 22px;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-start;
+          justify-content: center;
+          gap: 24px;
+        }
+
+        .cards > * {
+          width: min(var(--sdt-desktop-card-width, 480px), 100%);
+          min-width: min(420px, 100%);
+          max-width: var(--sdt-desktop-card-width, 480px);
+          flex: 0 1 var(--sdt-desktop-card-width, 480px);
         }
 
         .empty {
@@ -1938,7 +2000,7 @@ class SwissDynamicTariffsPanel extends HTMLElement {
           --mdc-icon-size: 32px;
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 800px) {
           :host {
             padding: 12px 8px 24px;
           }
@@ -1953,6 +2015,13 @@ class SwissDynamicTariffsPanel extends HTMLElement {
 
           .cards {
             gap: 14px;
+          }
+
+          .cards > * {
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            flex-basis: 100%;
           }
         }
       </style>
@@ -2083,7 +2152,7 @@ if (!customElements.get(CARD_TAG)) {
 }
 
 if (!customElements.get(PANEL_CARD_TAG)) {
-  customElements.define(PANEL_CARD_TAG, SwissDynamicTariffsCard);
+  customElements.define(PANEL_CARD_TAG, SwissDynamicTariffsPanelCard);
 }
 
 if (!customElements.get(PANEL_TAG)) {

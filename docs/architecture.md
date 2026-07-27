@@ -163,11 +163,21 @@ Today and tomorrow are always available as navigation choices. Additional
 buttons are created for every further date present in the provider data; there
 is no hard-coded 24-hour forecast limit.
 
-The chart deliberately has a 620-pixel drawing-width limit and a 230-pixel
-desktop height. A larger SVG did not add information but reduced the
-readability of quarter-hour steps and labels on wide dashboards. Y-axis tick
-labels use exactly two decimal places; tooltips and table cells retain the
-provider precision.
+The automatic panel caps each complete tariff card—not just its SVG—at 40% of
+`window.screen.width` on desktop. The limit therefore follows the user's screen,
+not the width of the Home Assistant content frame. On the 1920 × 1080 reference
+screen this is 768 pixels. If the browser window is narrowed, that same maximum
+occupies a progressively larger proportion of the window. Cards wrap when
+several tariffs are configured. At viewport widths of 800 pixels or less, every
+card uses the full available panel width.
+
+The SVG has no fixed CSS width or height. Its logical view box is recalculated
+from the measured card width, and its height follows a bounded aspect ratio.
+This keeps text and touch targets legible on phones without letting a desktop
+chart dominate the page. `ResizeObserver` follows orientation and layout
+changes; older WebViews receive a one-time post-attachment measurement instead.
+Y-axis tick labels use exactly two decimal places; tooltips and table cells
+retain the provider precision.
 
 ## Frontend state preservation
 
@@ -201,9 +211,15 @@ retaining the previous graph implementation. The public custom-card tag remains
 stable for Lovelace compatibility and may require a page reload after an
 upgrade.
 
+The public card and versioned internal card must use distinct JavaScript
+constructors. The Custom Elements registry rejects registering one constructor
+under two names; violating this rule aborts module evaluation and leaves a fresh
+panel blank. The internal card therefore uses a dedicated subclass even though
+it shares all behaviour.
+
 The manifest version, JavaScript `FRONTEND_VERSION` and panel component name
 must be changed together for each published frontend change. A regression test
-enforces this contract.
+enforces this contract and emulates the browser's constructor-uniqueness rule.
 
 ## Validation
 
