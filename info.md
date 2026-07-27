@@ -51,7 +51,9 @@ The automatic sidebar dashboard provides:
 
 Past chart values require Home Assistant Recorder/History to record the
 corresponding **Current price** sensors. Forecast display continues to work when
-history is unavailable.
+history is unavailable. Version 0.5.3 ensures that Recorder receives every
+scheduled quarter-hour even when the provider payload or consecutive prices are
+unchanged; gaps created by older versions cannot be filled retrospectively.
 
 {% if not installed %}
 

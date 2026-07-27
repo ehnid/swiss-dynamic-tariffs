@@ -43,6 +43,10 @@ periods and continue working when Recorder is disabled.
    24-hour limit.
 10. History is an optional enhancement; failures fall back to forecast-only
     rendering.
+11. The coordinator notifies sensor listeners after every scheduled tariff
+    refresh, even when the provider payload compares equal to the previous
+    response. The current period is time-dependent and must therefore advance
+    independently of payload changes.
 
 ## Why this location
 
@@ -98,6 +102,9 @@ external cards cannot reliably know the integration-specific merge rules.
 - Forecasts longer than 24 hours appear automatically.
 - Duplicate historical/forecast periods are deterministic.
 - Forecast-only use remains available without Recorder.
+- Recorder receives one state with exact boundaries for every quarter-hour,
+  including when consecutive periods have the same price or the provider
+  response remains unchanged.
 
 ### Trade-offs
 
@@ -116,5 +123,7 @@ external cards cannot reliably know the integration-specific merge rules.
 - Do not make Recorder a hard integration dependency.
 - Preserve exact timezone-aware period boundaries.
 - Preserve forecast-over-history precedence for duplicate periods.
+- Keep coordinator listener updates independent of provider-payload equality;
+  current-period sensor values and attributes change with time.
 - Keep public and versioned internal custom-element constructors distinct.
 - Derive chart dimensions from the rendered tariff-frame width.

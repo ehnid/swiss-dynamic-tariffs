@@ -147,6 +147,13 @@ History loading is cached by date, entity ID and current period start. This
 avoids a Recorder query for every Home Assistant state refresh while ensuring a
 new query occurs when the active quarter-hour changes.
 
+Although a provider may return the same full tariff list throughout the day,
+the coordinator notifies its sensor listeners after every scheduled 15-minute
+refresh. The current-price sensor is time-dependent: its value and exact
+`start`/`end` attributes must advance to the active period even when the fetched
+list compares equal. Recorder can therefore retain every quarter-hour,
+including consecutive periods with identical prices.
+
 History is optional. If the endpoint is unavailable or Recorder excludes the
 current-price sensors, the card continues with forecast data only.
 

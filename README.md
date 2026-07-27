@@ -155,6 +155,12 @@ precedence wherever available.
 This requires Home Assistant Recorder/History to record those sensors. Without
 history data, the card still displays every available forecast period.
 
+From version 0.5.3, the current-price sensors advance after every scheduled
+15-minute refresh even if the provider returns an unchanged list or two
+consecutive periods have the same price. This gives Recorder one state with
+exact boundaries per quarter-hour. Gaps recorded by an older version cannot be
+recovered after the provider has stopped publishing those past periods.
+
 ### Adding the card elsewhere
 
 Add a card by entity and choose a **Tariff forecast** sensor. On supported Home

@@ -12,7 +12,7 @@ from custom_components.swiss_dynamic_tariffs.models import TariffPeriod
 
 
 async def test_coordinator_update(hass):
-    """Test coordinator update."""
+    """Notify sensors again when an identical tariff payload is refreshed."""
 
     provider = Mock()
     provider.async_get_tariffs = AsyncMock(return_value=[])
@@ -26,13 +26,18 @@ async def test_coordinator_update(hass):
         provider,
         entry,
     )
+    listener = Mock()
+    remove_listener = coordinator.async_add_listener(listener)
 
+    await coordinator.async_refresh()
     await coordinator.async_refresh()
 
     assert coordinator.last_update_success
     assert coordinator.data == []
 
-    provider.async_get_tariffs.assert_awaited_once()
+    assert listener.call_count == 2
+    assert provider.async_get_tariffs.await_count == 2
+    remove_listener()
 
 
 def test_current_period():

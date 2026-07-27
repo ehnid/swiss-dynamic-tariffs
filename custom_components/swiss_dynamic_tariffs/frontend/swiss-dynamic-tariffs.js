@@ -1,7 +1,7 @@
 const CARD_TAG = "swiss-dynamic-tariffs-card";
 const CARD_TYPE = `custom:${CARD_TAG}`;
 const STRATEGY_TYPE = "swiss-dynamic-tariffs";
-const FRONTEND_VERSION = "0.5.2";
+const FRONTEND_VERSION = "0.5.3";
 const PANEL_TAG = `swiss-dynamic-tariffs-panel-${FRONTEND_VERSION.replaceAll(
   ".",
   "-",

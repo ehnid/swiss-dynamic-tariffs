@@ -47,7 +47,11 @@ class SwissDynamicTariffsCoordinator(
                 seconds=DEFAULT_SCAN_INTERVAL,
             ),
             config_entry=entry,
-            always_update=False,
+            # The provider payload often stays identical for an entire day,
+            # while current-period sensors must still advance every 15 minutes.
+            # Always notifying listeners lets Recorder persist each exact
+            # quarter-hour boundary, including consecutive equal prices.
+            always_update=True,
         )
 
     async def _async_update_data(
