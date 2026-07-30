@@ -47,6 +47,11 @@ periods and continue working when Recorder is disabled.
     refresh, even when the provider payload compares equal to the previous
     response. The current period is time-dependent and must therefore advance
     independently of payload changes.
+12. Visible tariff cards publish their raw price extrema to the overview. The
+    overview applies one shared Y-axis range to all cards: zero as the normal
+    lower bound, the next negative CHF 0.05 step when needed, and the next
+    CHF 0.10 step for the upper bound. Grid lines use CHF 0.10 intervals from a
+    highlighted zero line.
 
 ## Why this location
 
@@ -105,6 +110,7 @@ external cards cannot reliably know the integration-specific merge rules.
 - Recorder receives one state with exact boundaries for every quarter-hour,
   including when consecutive periods have the same price or the provider
   response remains unchanged.
+- Equal Y-axis ranges make simultaneous tariff graphs directly comparable.
 
 ### Trade-offs
 
@@ -125,5 +131,7 @@ external cards cannot reliably know the integration-specific merge rules.
 - Preserve forecast-over-history precedence for duplicate periods.
 - Keep coordinator listener updates independent of provider-payload equality;
   current-period sensor values and attributes change with time.
+- Synchronize visible dashboard-card axes from raw extrema and keep grid
+  intervals anchored to zero.
 - Keep public and versioned internal custom-element constructors distinct.
 - Derive chart dimensions from the rendered tariff-frame width.

@@ -31,6 +31,7 @@ def test_frontend_and_panel_versions_match_manifest():
     assert PANEL_COMPONENT_NAME == (
         f"swiss-dynamic-tariffs-panel-{VERSION.replace('.', '-')}"
     )
+    assert ".grid-line.zero-line" in source
 
 
 def test_legacy_history_is_reconstructed_on_quarter_hour_grid(tmp_path):
@@ -123,6 +124,15 @@ card._bindDayNavigation();
 dayClick();
 const mobileDimensions = chartDimensions(360);
 const desktopDimensions = chartDimensions(768);
+const sharedPanel = new SwissDynamicTariffsPanel();
+const sharedCardA = {};
+const sharedCardB = {};
+sharedPanel._cards = new Map([
+  ["a", sharedCardA],
+  ["b", sharedCardB],
+]);
+sharedPanel._updateSharedYAxis("a", { minimum: -0.021, maximum: 0.23 });
+sharedPanel._updateSharedYAxis("b", { minimum: 0.04, maximum: 0.46 });
 const generatedDashboard = await SwissDynamicTariffsDashboardStrategy.generate(
   {},
   {
@@ -158,6 +168,15 @@ process.stdout.write(JSON.stringify({
     referenceScreen: desktopCardWidth(1920),
     largerScreen: desktopCardWidth(2560),
     fallback: desktopCardWidth(undefined),
+  },
+  axes: {
+    positive: priceAxisBounds([0.01, 0.27]),
+    negative: priceAxisBounds([-0.121, 0.31]),
+    exactNegativeStep: priceAxisBounds([-0.05, 0.1]),
+    grid: priceGridTicks(-0.15, 0.4),
+    shared: sharedPanel._sharedYAxis,
+    firstCard: sharedCardA.sharedYAxis,
+    secondCard: sharedCardB.sharedYAxis,
   },
   dashboardLayout: {
     viewType: generatedDashboard.views[0].type,
@@ -206,9 +225,18 @@ process.stdout.write(JSON.stringify({
             "largerScreen": 1024,
             "fallback": 480,
         },
+        "axes": {
+            "positive": {"minimum": 0, "maximum": 0.3},
+            "negative": {"minimum": -0.15, "maximum": 0.4},
+            "exactNegativeStep": {"minimum": -0.05, "maximum": 0.1},
+            "grid": [-0.1, 0, 0.1, 0.2, 0.3, 0.4],
+            "shared": {"minimum": -0.05, "maximum": 0.5},
+            "firstCard": {"minimum": -0.05, "maximum": 0.5},
+            "secondCard": {"minimum": -0.05, "maximum": 0.5},
+        },
         "dashboardLayout": {
             "viewType": "panel",
-            "cardType": "custom:swiss-dynamic-tariffs-panel-0-5-4",
+            "cardType": "custom:swiss-dynamic-tariffs-panel-0-5-5",
         },
         "dayInteraction": {"selectedOffset": 1, "renderCount": 1},
     }

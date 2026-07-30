@@ -3,8 +3,11 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
+import voluptuous as vol
 
-from custom_components.swiss_dynamic_tariffs.const import DOMAIN
+from homeassistant.helpers.selector import SelectSelector, SelectSelectorMode
+
+from custom_components.swiss_dynamic_tariffs.const import CONF_PROVIDER, DOMAIN
 
 
 @pytest.fixture(autouse=True)
@@ -37,6 +40,26 @@ async def test_config_flow_single_step(hass):
     assert result["type"] == "create_entry"
     assert result["title"] == "BKW – dynamische Einspeisevergütung"
     assert result["data"] == {"provider": "bkw", "tariff": "feed_in"}
+
+
+@pytest.mark.asyncio
+async def test_config_flow_starts_without_a_selected_tariff(hass):
+    """Show a dropdown without implicitly choosing its first BKW option."""
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": "user"},
+    )
+
+    assert result["type"] == "form"
+    schema = result["data_schema"].schema
+    provider_marker = next(
+        marker for marker in schema if marker.schema == CONF_PROVIDER
+    )
+    provider_selector = schema[provider_marker]
+    assert provider_marker.default is vol.UNDEFINED
+    assert isinstance(provider_selector, SelectSelector)
+    assert provider_selector.config["mode"] == SelectSelectorMode.DROPDOWN
 
 
 @pytest.mark.asyncio

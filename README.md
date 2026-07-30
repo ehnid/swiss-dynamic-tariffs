@@ -59,6 +59,9 @@ These names are shown in the Home Assistant configuration flow:
 | EKZ – Energie Dynamisch + Netz 400D            | Integrated                                |
 | EKZ Einsiedeln – Energie Dynamisch + Netz 400D | Integrated                                |
 
+No tariff is preselected. The user must explicitly choose the required
+provider/tariff combination.
+
 The amount and horizon of data are controlled by each provider. The integration
 shows all periods returned by the provider and does not invent missing prices.
 
@@ -142,6 +145,9 @@ Each card provides:
 - minimum, maximum and current/next values;
 - a current-time marker, Y-axis labels with two decimal places and exact values
   on hover;
+- one shared Y-axis range across all visible tariff graphs, with a zero-based
+  scale unless negative prices require additional space;
+- 10-rappen grid intervals from zero and a highlighted zero line;
 - an expandable table that remains open during data refreshes.
 
 Today is selected initially. The selection remains unchanged during updates. If

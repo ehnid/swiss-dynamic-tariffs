@@ -213,6 +213,26 @@ changes; older WebViews receive a one-time post-attachment measurement instead.
 Y-axis tick labels use exactly two decimal places; tooltips and table cells
 retain the provider precision.
 
+### Shared price scale
+
+Every visible tariff card reports the raw minimum and maximum of all price
+components currently plotted in that card. The responsive overview aggregates
+those extrema and sends one common Y-axis range back to every card. Selecting a
+different date or loading additional Recorder history recalculates the common
+range. A standalone manually added tariff card applies the same rounding rules
+to its own data.
+
+The common upper bound is the next CHF 0.10 step at or above the global maximum.
+The lower bound is zero while all values are non-negative. If any value is
+negative, the lower bound is rounded down to the next CHF 0.05 step. Horizontal
+grid lines remain anchored to zero at CHF 0.10 intervals, even when the lower
+boundary lies on an intermediate five-rappen step. The zero grid line is solid
+and visually stronger than the other grid lines.
+
+This makes price levels directly comparable between tariffs without hiding
+negative compensation or adding arbitrary percentage padding around each
+individual series.
+
 ## Frontend state preservation
 
 The card is re-rendered when Home Assistant state changes. User interaction is

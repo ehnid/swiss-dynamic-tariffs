@@ -1,5 +1,11 @@
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from .const import CONF_PROVIDER, CONF_TARIFF, DOMAIN
 from .providers.registry import TARIFF_OPTIONS, get_tariff_option
@@ -34,8 +40,14 @@ class SwissDynamicTariffsConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_PROVIDER): vol.In(
-                        {key: option.title for key, option in TARIFF_OPTIONS.items()}
+                    vol.Required(CONF_PROVIDER): SelectSelector(
+                        SelectSelectorConfig(
+                            options=[
+                                SelectOptionDict(value=key, label=option.title)
+                                for key, option in TARIFF_OPTIONS.items()
+                            ],
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
                     )
                 }
             ),

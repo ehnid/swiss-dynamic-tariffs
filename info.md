@@ -28,7 +28,8 @@ constraints and network planning.
 - EKZ Einsiedeln – Energie Dynamisch + Netz 400D
 
 Every tariff is a separate configuration-flow option, so multiple tariffs from
-the same provider can be added.
+the same provider can be added. The selection starts empty and requires an
+explicit provider/tariff choice.
 
 ## Sensors and dashboard
 
@@ -49,6 +50,9 @@ The dashboard provides:
   combined with the forecast;
 - Y-axis labels limited to two decimal places while detail values retain their
   precision;
+- a synchronized Y-axis range for all visible tariff graphs, starting at zero
+  unless negative values require a lower bound;
+- a highlighted zero line and grid lines every CHF 0.10, measured from zero;
 - all dates published by the provider, including forecasts beyond 24 hours;
 - exact hover values and minimum/maximum annotations;
 - an expandable quarter-hour table that remains open during updates.

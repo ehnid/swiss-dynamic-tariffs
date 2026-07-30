@@ -1,14 +1,18 @@
 const CARD_TAG = "swiss-dynamic-tariffs-card";
 const CARD_TYPE = `custom:${CARD_TAG}`;
 const STRATEGY_TYPE = "swiss-dynamic-tariffs";
-const FRONTEND_VERSION = "0.5.4";
+const FRONTEND_VERSION = "0.5.5";
 const PANEL_TAG = `swiss-dynamic-tariffs-panel-${FRONTEND_VERSION.replaceAll(
   ".",
   "-",
 )}`;
 const PANEL_CARD_TAG = `${PANEL_TAG}-card`;
+const AXIS_EXTENT_EVENT = "swiss-dynamic-tariffs-axis-extent";
 const FORECAST_ATTRIBUTES = ["prices", "available_from", "available_until"];
 const QUARTER_HOUR_MS = 15 * 60 * 1000;
+const PRICE_GRID_STEP = 0.1;
+const NEGATIVE_AXIS_STEP = 0.05;
+const ROUNDING_EPSILON = 1e-9;
 
 const COMPONENTS = [
   {
@@ -512,6 +516,61 @@ function priceValues(periods, components) {
   );
 }
 
+function priceAxisBounds(values) {
+  const finiteValues = values.map(Number).filter(Number.isFinite);
+  if (!finiteValues.length) {
+    return { minimum: 0, maximum: PRICE_GRID_STEP };
+  }
+
+  const rawMinimum = Math.min(...finiteValues);
+  const rawMaximum = Math.max(...finiteValues);
+  const minimum =
+    rawMinimum < 0
+      ? Math.floor((rawMinimum + ROUNDING_EPSILON) / NEGATIVE_AXIS_STEP) *
+        NEGATIVE_AXIS_STEP
+      : 0;
+  let maximum =
+    rawMaximum > 0
+      ? Math.ceil((rawMaximum - ROUNDING_EPSILON) / PRICE_GRID_STEP) *
+        PRICE_GRID_STEP
+      : 0;
+
+  if (maximum <= minimum) {
+    maximum = minimum + PRICE_GRID_STEP;
+  }
+
+  return {
+    minimum: Number(minimum.toFixed(10)),
+    maximum: Number(maximum.toFixed(10)),
+  };
+}
+
+function priceGridTicks(minimum, maximum) {
+  const ticks = [0];
+
+  for (
+    let value = PRICE_GRID_STEP;
+    value <= maximum + ROUNDING_EPSILON;
+    value += PRICE_GRID_STEP
+  ) {
+    ticks.push(Number(value.toFixed(10)));
+  }
+
+  for (
+    let value = -PRICE_GRID_STEP;
+    value >= minimum - ROUNDING_EPSILON;
+    value -= PRICE_GRID_STEP
+  ) {
+    ticks.push(Number(value.toFixed(10)));
+  }
+
+  return ticks.sort((left, right) => left - right);
+}
+
+function equalAxisBounds(left, right) {
+  return left?.minimum === right?.minimum && left?.maximum === right?.maximum;
+}
+
 function stepPath(periods, component, xScale, yScale) {
   let path = "";
   let previousEnd = null;
@@ -539,17 +598,6 @@ function stepPath(periods, component, xScale, yScale) {
   }
 
   return path.trim();
-}
-
-function numericTicks(minimum, maximum, count) {
-  if (minimum === maximum) {
-    return [minimum];
-  }
-
-  return Array.from(
-    { length: count },
-    (_, index) => minimum + ((maximum - minimum) * index) / (count - 1),
-  );
 }
 
 function timeTicks(minimum, maximum, count) {
@@ -608,6 +656,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
     this._historyLoadedKey = undefined;
     this._historyRetryAfter = 0;
     this._renderedHostWidth = undefined;
+    this._sharedYAxis = undefined;
     this._resizeObserver =
       typeof ResizeObserver === "undefined"
         ? undefined
@@ -656,6 +705,21 @@ class SwissDynamicTariffsCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     this._scheduleHistoryLoad();
+    this._render();
+  }
+
+  set sharedYAxis(bounds) {
+    const nextBounds =
+      bounds &&
+      Number.isFinite(bounds.minimum) &&
+      Number.isFinite(bounds.maximum) &&
+      bounds.maximum > bounds.minimum
+        ? { minimum: bounds.minimum, maximum: bounds.maximum }
+        : undefined;
+    if (equalAxisBounds(this._sharedYAxis, nextBounds)) {
+      return;
+    }
+    this._sharedYAxis = nextBounds;
     this._render();
   }
 
@@ -841,6 +905,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
         </div>
       </ha-card>
     `;
+    this._publishAxisExtent();
   }
 
   _emptyDayCard(title, selectedDay, dayNavigation, message) {
@@ -871,6 +936,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
       </ha-card>
     `;
     this._bindDayNavigation();
+    this._publishAxisExtent();
   }
 
   _render() {
@@ -963,15 +1029,14 @@ class SwissDynamicTariffsCard extends HTMLElement {
     const values = priceValues(periods, components);
     const rawMinimum = Math.min(...values);
     const rawMaximum = Math.max(...values);
-    const valueRange =
-      rawMaximum - rawMinimum || Math.max(Math.abs(rawMaximum), 1);
-    const yMinimum = rawMinimum - valueRange * 0.12;
-    const yMaximum = rawMaximum + valueRange * 0.12;
+    const localYAxis = priceAxisBounds(values);
+    const { minimum: yMinimum, maximum: yMaximum } =
+      this._sharedYAxis || localYAxis;
     const xScale = (timestamp) =>
       plot.left + ((timestamp - xMinimum) / (xMaximum - xMinimum)) * plotWidth;
     const yScale = (value) =>
       plot.top + ((yMaximum - value) / (yMaximum - yMinimum)) * plotHeight;
-    const yTicks = numericTicks(yMinimum, yMaximum, 5);
+    const yTicks = priceGridTicks(yMinimum, yMaximum);
     const xTicks = timeTicks(xMinimum, xMaximum, compact ? 4 : 6);
     const primaryComponent = components[0];
     const primaryPeriods = periods.filter((period) =>
@@ -1005,7 +1070,9 @@ class SwissDynamicTariffsCard extends HTMLElement {
       .map((tick) => {
         const y = yScale(tick);
         return `
-          <line class="grid-line" x1="${plot.left}" y1="${y}" x2="${
+          <line class="grid-line ${
+            Math.abs(tick) < ROUNDING_EPSILON ? "zero-line" : ""
+          }" x1="${plot.left}" y1="${y}" x2="${
             width - plot.right
           }" y2="${y}"></line>
           <text class="axis-tick y-tick" x="${plot.left - 12}" y="${
@@ -1266,6 +1333,16 @@ class SwissDynamicTariffsCard extends HTMLElement {
     this._bindDayNavigation();
     this._bindChartInteractions();
     this._bindDetailsInteraction();
+    this._publishAxisExtent({ minimum: rawMinimum, maximum: rawMaximum });
+  }
+
+  _publishAxisExtent(extent) {
+    this.dispatchEvent(
+      new CustomEvent(AXIS_EXTENT_EVENT, {
+        bubbles: false,
+        detail: extent || null,
+      }),
+    );
   }
 
   _bindDayNavigation() {
@@ -1587,6 +1664,16 @@ class SwissDynamicTariffsCard extends HTMLElement {
         stroke-dasharray: 3 5;
       }
 
+      .grid-line.zero-line {
+        stroke: color-mix(
+          in srgb,
+          var(--primary-text-color) 76%,
+          transparent
+        );
+        stroke-width: 2.5;
+        stroke-dasharray: none;
+      }
+
       .axis-line,
       .x-tick-line {
         stroke: color-mix(
@@ -1856,6 +1943,8 @@ class SwissDynamicTariffsPanel extends HTMLElement {
     this._narrow = false;
     this._renderedKey = undefined;
     this._cards = new Map();
+    this._axisExtents = new Map();
+    this._sharedYAxis = undefined;
     this._handleWindowResize = () => this._updateResponsiveCardWidth();
   }
 
@@ -1899,6 +1988,35 @@ class SwissDynamicTariffsPanel extends HTMLElement {
     this._config = config;
   }
 
+  _updateSharedYAxis(entityId, extent) {
+    if (
+      extent &&
+      Number.isFinite(extent.minimum) &&
+      Number.isFinite(extent.maximum)
+    ) {
+      this._axisExtents.set(entityId, extent);
+    } else {
+      this._axisExtents.delete(entityId);
+    }
+
+    const sharedYAxis = this._axisExtents.size
+      ? priceAxisBounds(
+          [...this._axisExtents.values()].flatMap((value) => [
+            value.minimum,
+            value.maximum,
+          ]),
+        )
+      : undefined;
+    if (equalAxisBounds(this._sharedYAxis, sharedYAxis)) {
+      return;
+    }
+
+    this._sharedYAxis = sharedYAxis;
+    for (const card of this._cards.values()) {
+      card.sharedYAxis = sharedYAxis;
+    }
+  }
+
   _render() {
     if (!this._hass) {
       return;
@@ -1919,6 +2037,8 @@ class SwissDynamicTariffsPanel extends HTMLElement {
 
     this._renderedKey = renderedKey;
     this._cards.clear();
+    this._axisExtents.clear();
+    this._sharedYAxis = undefined;
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -2051,10 +2171,13 @@ class SwissDynamicTariffsPanel extends HTMLElement {
     const cardContainer = this.shadowRoot.querySelector(".cards");
     for (const state of entities) {
       const card = document.createElement(PANEL_CARD_TAG);
-      card.setConfig({ entity: state.entity_id });
-      card.hass = this._hass;
-      cardContainer.append(card);
       this._cards.set(state.entity_id, card);
+      card.addEventListener(AXIS_EXTENT_EVENT, (event) => {
+        this._updateSharedYAxis(state.entity_id, event.detail);
+      });
+      card.setConfig({ entity: state.entity_id });
+      cardContainer.append(card);
+      card.hass = this._hass;
     }
   }
 }
