@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Dynamische Stromtarife Schweiz",
+        "title": "Swiss Dynamic Tariffs",
         "description": "Wählen Sie Ihren Energieversorger und Tarif aus.",
         "data": {
           "provider": "Anbieter und Tarif"
@@ -34,8 +34,8 @@
       "feed_in_average_price": {
         "name": "Durchschnittliche Einspeisevergütung"
       },
-      "grid_usage_current_price": { "name": "Aktueller Netznutzungspreis" },
-      "grid_usage_next_price": { "name": "Nächster Netznutzungspreis" },
+      "grid_usage_current_price": { "name": "Aktueller Netznutzungstarif" },
+      "grid_usage_next_price": { "name": "Nächster Netznutzungstarif" },
       "grid_usage_today_min": {
         "name": "Günstigste Viertelstunde – Netznutzung"
       },
@@ -43,10 +43,10 @@
         "name": "Teuerste Viertelstunde – Netznutzung"
       },
       "grid_usage_average_price": {
-        "name": "Durchschnittlicher Netznutzungspreis"
+        "name": "Durchschnittlicher Netznutzungstarif"
       },
-      "grid_current_price": { "name": "Aktueller Netzpreis inklusive Abgaben" },
-      "grid_next_price": { "name": "Nächster Netzpreis inklusive Abgaben" },
+      "grid_current_price": { "name": "Aktueller Netztarif inkl. Abgaben" },
+      "grid_next_price": { "name": "Nächster Netztarif inkl. Abgaben" },
       "grid_today_min": {
         "name": "Günstigste Viertelstunde – Netz inklusive Abgaben"
       },
@@ -54,7 +54,7 @@
         "name": "Teuerste Viertelstunde – Netz inklusive Abgaben"
       },
       "grid_average_price": {
-        "name": "Durchschnittlicher Netzpreis inklusive Abgaben"
+        "name": "Durchschnittlicher Netztarif inkl. Abgaben"
       },
       "integrated_current_price": { "name": "Aktueller Gesamtpreis" },
       "integrated_next_price": { "name": "Nächster Gesamtpreis" },

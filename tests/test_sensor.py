@@ -414,6 +414,41 @@ def test_all_sensor_names_are_translated(language):
     assert set(translations["entity"]["sensor"]) == expected_translation_keys
 
 
+def _translation_leaf_paths(value, prefix=""):
+    """Return every translated leaf path for structural comparison."""
+
+    if not isinstance(value, dict):
+        return {prefix}
+
+    return {
+        path
+        for key, child in value.items()
+        for path in _translation_leaf_paths(
+            child,
+            f"{prefix}.{key}" if prefix else key,
+        )
+    }
+
+
+@pytest.mark.parametrize("language", ["de", "en", "fr", "it"])
+def test_translation_files_match_source_structure(language):
+    """Keep config-flow and entity translations complete in every language."""
+
+    integration_path = (
+        Path(__file__).parents[1] / "custom_components" / "swiss_dynamic_tariffs"
+    )
+    source = json.loads((integration_path / "strings.json").read_text(encoding="utf-8"))
+    translation = json.loads(
+        (integration_path / "translations" / f"{language}.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert _translation_leaf_paths(translation) == _translation_leaf_paths(source)
+    if language == "en":
+        assert translation == source
+
+
 @pytest.mark.asyncio
 async def test_setup_only_adds_tariff_types_supported_by_provider(hass):
     """Test that BKW does not create unavailable consumption/grid sensors."""

@@ -182,6 +182,17 @@ process.stdout.write(JSON.stringify({
     viewType: generatedDashboard.views[0].type,
     cardType: generatedDashboard.views[0].cards[0].type,
   },
+  textKeysMatch: Object.values(TEXT).every(
+    (translation) =>
+      JSON.stringify(Object.keys(translation).sort()) ===
+      JSON.stringify(Object.keys(TEXT.en).sort()),
+  ),
+  localizedLegend: {
+    de: TEXT.de.legend,
+    en: TEXT.en.legend,
+    fr: TEXT.fr.legend,
+    it: TEXT.it.legend,
+  },
   dayInteraction: {
     selectedOffset: card._selectedDayOffset,
     renderCount,
@@ -236,7 +247,14 @@ process.stdout.write(JSON.stringify({
         },
         "dashboardLayout": {
             "viewType": "panel",
-            "cardType": "custom:swiss-dynamic-tariffs-panel-0-5-5",
+            "cardType": "custom:swiss-dynamic-tariffs-panel-0-5-6",
+        },
+        "textKeysMatch": True,
+        "localizedLegend": {
+            "de": "Legende",
+            "en": "Legend",
+            "fr": "Légende",
+            "it": "Legenda",
         },
         "dayInteraction": {"selectedOffset": 1, "renderCount": 1},
     }

@@ -2,8 +2,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "Tariffe dinamiche svizzere",
-        "description": "Seleziona il fornitore di energia e la tariffa",
+        "title": "Swiss Dynamic Tariffs",
+        "description": "Seleziona il fornitore di energia e la tariffa.",
         "data": {
           "provider": "Fornitore e tariffa"
         }
@@ -24,15 +24,19 @@
       "electricity_today_max": { "name": "Quarto d’ora più costoso – energia" },
       "electricity_average_price": { "name": "Prezzo medio dell’energia" },
       "feed_in_current_price": {
-        "name": "Remunerazione attuale dell’immissione"
+        "name": "Remunerazione attuale per l’immissione"
       },
       "feed_in_next_price": {
-        "name": "Prossima remunerazione dell’immissione"
+        "name": "Prossima remunerazione per l’immissione"
       },
-      "feed_in_today_min": { "name": "Remunerazione minima dell’immissione" },
-      "feed_in_today_max": { "name": "Remunerazione massima dell’immissione" },
+      "feed_in_today_min": {
+        "name": "Remunerazione minima per l’immissione"
+      },
+      "feed_in_today_max": {
+        "name": "Remunerazione massima per l’immissione"
+      },
       "feed_in_average_price": {
-        "name": "Remunerazione media dell’immissione"
+        "name": "Remunerazione media per l’immissione"
       },
       "grid_usage_current_price": {
         "name": "Tariffa attuale per l’utilizzo della rete"
@@ -49,24 +53,30 @@
       "grid_usage_average_price": {
         "name": "Tariffa media per l’utilizzo della rete"
       },
-      "grid_current_price": { "name": "Tariffa di rete totale attuale" },
-      "grid_next_price": { "name": "Prossima tariffa di rete totale" },
+      "grid_current_price": {
+        "name": "Tariffa di rete attuale, tasse incluse"
+      },
+      "grid_next_price": {
+        "name": "Prossima tariffa di rete, tasse incluse"
+      },
       "grid_today_min": {
-        "name": "Quarto d’ora più economico – tariffa di rete totale"
+        "name": "Quarto d’ora più economico – rete, tasse incluse"
       },
       "grid_today_max": {
-        "name": "Quarto d’ora più costoso – tariffa di rete totale"
+        "name": "Quarto d’ora più costoso – rete, tasse incluse"
       },
-      "grid_average_price": { "name": "Tariffa di rete totale media" },
-      "integrated_current_price": { "name": "Tariffa complessiva attuale" },
-      "integrated_next_price": { "name": "Prossima tariffa complessiva" },
+      "grid_average_price": {
+        "name": "Tariffa di rete media, tasse incluse"
+      },
+      "integrated_current_price": { "name": "Prezzo totale attuale" },
+      "integrated_next_price": { "name": "Prossimo prezzo totale" },
       "integrated_today_min": {
-        "name": "Quarto d’ora più economico – tariffa complessiva"
+        "name": "Quarto d’ora più economico – prezzo totale"
       },
       "integrated_today_max": {
-        "name": "Quarto d’ora più costoso – tariffa complessiva"
+        "name": "Quarto d’ora più costoso – prezzo totale"
       },
-      "integrated_average_price": { "name": "Tariffa complessiva media" }
+      "integrated_average_price": { "name": "Prezzo totale medio" }
     }
   }
 }

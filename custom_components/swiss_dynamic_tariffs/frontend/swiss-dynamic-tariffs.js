@@ -1,7 +1,7 @@
 const CARD_TAG = "swiss-dynamic-tariffs-card";
 const CARD_TYPE = `custom:${CARD_TAG}`;
 const STRATEGY_TYPE = "swiss-dynamic-tariffs";
-const FRONTEND_VERSION = "0.5.5";
+const FRONTEND_VERSION = "0.5.6";
 const PANEL_TAG = `swiss-dynamic-tariffs-panel-${FRONTEND_VERSION.replaceAll(
   ".",
   "-",
@@ -20,7 +20,7 @@ const COMPONENTS = [
     color: "#8b5cf6",
     labels: {
       de: "Gesamtpreis",
-      en: "Integrated price",
+      en: "Total price",
       fr: "Prix total",
       it: "Prezzo totale",
     },
@@ -60,9 +60,9 @@ const COMPONENTS = [
     color: "#22c55e",
     labels: {
       de: "Einspeisevergütung",
-      en: "Feed-in tariff",
-      fr: "Rétribution d’injection",
-      it: "Tariffa di immissione",
+      en: "Feed-in remuneration",
+      fr: "Rétribution de l’injection",
+      it: "Remunerazione per l’immissione",
     },
   },
 ];
@@ -73,16 +73,22 @@ const TEXT = {
     dashboardTitle: "Dynamische Stromtarife",
     dashboardDescription:
       "Automatische Preisdiagramme für alle Tarifprognosen.",
+    cardPickerName: "Swiss Dynamic Tariffs – Tarifprognose",
+    cardPickerDescription:
+      "Interaktive Zeitleiste für aufgezeichnete und prognostizierte Viertelstundenpreise.",
+    strategyDescription:
+      "Automatische Diagramme für aufgezeichnete und prognostizierte Tarifpreise.",
     noData: "Noch keine zukünftigen Tarifdaten verfügbar.",
     noDataForDay: "Für diesen Tag sind keine Tarifdaten verfügbar.",
     unavailable: "Der Tarifprognose-Sensor ist nicht verfügbar.",
     chooseEntity: "Tarifprognose-Sensor",
     priceAxis: "Preis [CHF/kWh]",
     timeAxis: "Zeit",
-    current: "Aktuell",
+    legend: "Legende",
+    current: "Aktueller Wert",
     next: "Nächster Wert",
-    minimum: "Günstigste",
-    maximum: "Teuerste",
+    minimum: "Minimum",
+    maximum: "Maximum",
     period: "Verfügbarer Zeitraum",
     until: "bis",
     periods: "Viertelstunden",
@@ -100,23 +106,29 @@ const TEXT = {
     title: "Tariff forecast",
     dashboardTitle: "Dynamic electricity tariffs",
     dashboardDescription: "Automatic price charts for all tariff forecasts.",
+    cardPickerName: "Swiss Dynamic Tariffs – Tariff forecast",
+    cardPickerDescription:
+      "Interactive timeline for recorded and forecast quarter-hour prices.",
+    strategyDescription:
+      "Automatic charts for recorded and forecast tariff prices.",
     noData: "No future tariff data is available yet.",
     noDataForDay: "No tariff data is available for this day.",
     unavailable: "The tariff forecast sensor is unavailable.",
     chooseEntity: "Tariff forecast sensor",
     priceAxis: "Price [CHF/kWh]",
     timeAxis: "Time",
-    current: "Current",
+    legend: "Legend",
+    current: "Current value",
     next: "Next value",
-    minimum: "Cheapest",
-    maximum: "Most expensive",
+    minimum: "Minimum",
+    maximum: "Maximum",
     period: "Available period",
     until: "to",
     periods: "quarter-hours",
     now: "Now",
     today: "Today",
     tomorrow: "Tomorrow",
-    selectDay: "Select day",
+    selectDay: "Select a day",
     first: "First value",
     showData: "Show quarter-hour values",
     time: "Time window",
@@ -127,23 +139,29 @@ const TEXT = {
     dashboardTitle: "Tarifs dynamiques de l’électricité",
     dashboardDescription:
       "Graphiques automatiques pour toutes les prévisions tarifaires.",
+    cardPickerName: "Swiss Dynamic Tariffs – Prévision tarifaire",
+    cardPickerDescription:
+      "Graphique chronologique interactif des prix quart-horaires enregistrés et prévisionnels.",
+    strategyDescription:
+      "Graphiques automatiques des tarifs enregistrés et prévisionnels.",
     noData: "Aucune donnée tarifaire future n’est encore disponible.",
     noDataForDay: "Aucune donnée tarifaire n’est disponible pour ce jour.",
     unavailable: "Le capteur de prévision tarifaire n’est pas disponible.",
     chooseEntity: "Capteur de prévision tarifaire",
     priceAxis: "Prix [CHF/kWh]",
     timeAxis: "Heure",
-    current: "Actuel",
-    next: "Prochaine valeur",
-    minimum: "Le moins cher",
-    maximum: "Le plus cher",
+    legend: "Légende",
+    current: "Valeur actuelle",
+    next: "Valeur suivante",
+    minimum: "Minimum",
+    maximum: "Maximum",
     period: "Période disponible",
     until: "à",
     periods: "quarts d’heure",
     now: "Maintenant",
     today: "Aujourd’hui",
     tomorrow: "Demain",
-    selectDay: "Sélectionner le jour",
+    selectDay: "Sélectionner un jour",
     first: "Première valeur",
     showData: "Afficher les valeurs par quart d’heure",
     time: "Plage horaire",
@@ -155,28 +173,34 @@ const TEXT = {
     dashboardTitle: "Tariffe elettriche dinamiche",
     dashboardDescription:
       "Grafici automatici per tutte le previsioni tariffarie.",
+    cardPickerName: "Swiss Dynamic Tariffs – Previsione tariffaria",
+    cardPickerDescription:
+      "Grafico temporale interattivo dei prezzi quartorari registrati e previsti.",
+    strategyDescription:
+      "Grafici automatici dei prezzi tariffari registrati e previsti.",
     noData: "Non sono ancora disponibili dati tariffari futuri.",
     noDataForDay: "Non sono disponibili dati tariffari per questo giorno.",
     unavailable: "Il sensore della previsione tariffaria non è disponibile.",
     chooseEntity: "Sensore della previsione tariffaria",
     priceAxis: "Prezzo [CHF/kWh]",
     timeAxis: "Ora",
-    current: "Attuale",
-    next: "Prossimo valore",
-    minimum: "Più conveniente",
-    maximum: "Più costoso",
+    legend: "Legenda",
+    current: "Valore attuale",
+    next: "Valore successivo",
+    minimum: "Minimo",
+    maximum: "Massimo",
     period: "Periodo disponibile",
     until: "a",
     periods: "quarti d’ora",
     now: "Adesso",
     today: "Oggi",
     tomorrow: "Domani",
-    selectDay: "Seleziona giorno",
+    selectDay: "Seleziona il giorno",
     first: "Primo valore",
     showData: "Mostra i valori ogni quarto d’ora",
     time: "Intervallo",
     noForecasts:
-      "Nessuna previsione tariffaria trovata. Configurare prima una tariffa dinamica.",
+      "Nessuna previsione tariffaria trovata. Configura prima una tariffa dinamica.",
   },
 };
 
@@ -188,6 +212,13 @@ function languageFromHass(hass) {
 
 function textFor(hass) {
   return TEXT[languageFromHass(hass)];
+}
+
+function textForBrowser() {
+  const language =
+    typeof navigator === "undefined" ? "en" : navigator.language || "en";
+  const shortLanguage = language.split("-")[0].toLowerCase();
+  return TEXT[shortLanguage] || TEXT.en;
 }
 
 function componentLabel(component, hass) {
@@ -1252,7 +1283,9 @@ class SwissDynamicTariffsCard extends HTMLElement {
         </div>
 
         <div class="summary-grid">${summary}</div>
-        <div class="legend" aria-label="Legend">${legend}</div>
+        <div class="legend" aria-label="${escapeHtml(
+          text.legend,
+        )}">${legend}</div>
 
         <div class="chart-wrap">
           <svg
@@ -2294,11 +2327,11 @@ if (!customElements.get(strategyTag)) {
 
 window.customCards = window.customCards || [];
 if (!window.customCards.some((card) => card.type === CARD_TAG)) {
+  const registrationText = textForBrowser();
   window.customCards.push({
     type: CARD_TAG,
-    name: "Swiss Dynamic Tariffs – Tariff forecast",
-    description:
-      "Interactive timeline for recorded and forecast quarter-hour prices.",
+    name: registrationText.cardPickerName,
+    description: registrationText.cardPickerDescription,
     preview: true,
     getEntitySuggestion: (hass, entityId) => {
       if (!isForecastState(hass.states[entityId])) {
@@ -2321,11 +2354,12 @@ if (
       strategy.type === STRATEGY_TYPE && strategy.strategyType === "dashboard",
   )
 ) {
+  const registrationText = textForBrowser();
   window.customStrategies.push({
     type: STRATEGY_TYPE,
     strategyType: "dashboard",
     name: "Swiss Dynamic Tariffs",
-    description: "Automatic charts for recorded and forecast tariff prices.",
+    description: registrationText.strategyDescription,
     documentationURL:
       "https://github.com/ehnid/swiss-dynamic-tariffs#dashboard-visualization",
   });

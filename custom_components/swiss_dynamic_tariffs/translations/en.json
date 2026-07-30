@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Swiss Dynamic Tariffs",
-        "description": "Select your energy provider and tariff",
+        "description": "Select your energy provider and tariff.",
         "data": {
           "provider": "Provider and tariff"
         }
@@ -25,11 +25,11 @@
         "name": "Most expensive quarter-hour – electricity"
       },
       "electricity_average_price": { "name": "Average electricity price" },
-      "feed_in_current_price": { "name": "Current feed-in tariff" },
-      "feed_in_next_price": { "name": "Next feed-in tariff" },
-      "feed_in_today_min": { "name": "Lowest feed-in tariff" },
-      "feed_in_today_max": { "name": "Highest feed-in tariff" },
-      "feed_in_average_price": { "name": "Average feed-in tariff" },
+      "feed_in_current_price": { "name": "Current feed-in remuneration" },
+      "feed_in_next_price": { "name": "Next feed-in remuneration" },
+      "feed_in_today_min": { "name": "Lowest feed-in remuneration" },
+      "feed_in_today_max": { "name": "Highest feed-in remuneration" },
+      "feed_in_average_price": { "name": "Average feed-in remuneration" },
       "grid_usage_current_price": { "name": "Current grid usage tariff" },
       "grid_usage_next_price": { "name": "Next grid usage tariff" },
       "grid_usage_today_min": { "name": "Cheapest quarter-hour – grid usage" },
@@ -37,22 +37,24 @@
         "name": "Most expensive quarter-hour – grid usage"
       },
       "grid_usage_average_price": { "name": "Average grid usage tariff" },
-      "grid_current_price": { "name": "Current total grid tariff" },
-      "grid_next_price": { "name": "Next total grid tariff" },
-      "grid_today_min": { "name": "Cheapest quarter-hour – total grid tariff" },
-      "grid_today_max": {
-        "name": "Most expensive quarter-hour – total grid tariff"
+      "grid_current_price": { "name": "Current grid tariff incl. levies" },
+      "grid_next_price": { "name": "Next grid tariff incl. levies" },
+      "grid_today_min": {
+        "name": "Cheapest quarter-hour – grid incl. levies"
       },
-      "grid_average_price": { "name": "Average total grid tariff" },
-      "integrated_current_price": { "name": "Current integrated tariff" },
-      "integrated_next_price": { "name": "Next integrated tariff" },
+      "grid_today_max": {
+        "name": "Most expensive quarter-hour – grid incl. levies"
+      },
+      "grid_average_price": { "name": "Average grid tariff incl. levies" },
+      "integrated_current_price": { "name": "Current total price" },
+      "integrated_next_price": { "name": "Next total price" },
       "integrated_today_min": {
-        "name": "Cheapest quarter-hour – integrated tariff"
+        "name": "Cheapest quarter-hour – total price"
       },
       "integrated_today_max": {
-        "name": "Most expensive quarter-hour – integrated tariff"
+        "name": "Most expensive quarter-hour – total price"
       },
-      "integrated_average_price": { "name": "Average integrated tariff" }
+      "integrated_average_price": { "name": "Average total price" }
     }
   }
 }

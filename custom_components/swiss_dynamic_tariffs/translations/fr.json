@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Swiss Dynamic Tariffs",
-        "description": "Sélectionnez votre fournisseur d’énergie et votre tarif",
+        "description": "Sélectionnez votre fournisseur d’énergie et votre tarif.",
         "data": {
           "provider": "Fournisseur et tarif"
         }
@@ -26,13 +26,13 @@
       },
       "electricity_average_price": { "name": "Prix moyen de l’énergie" },
       "feed_in_current_price": {
-        "name": "Rémunération actuelle de l’injection"
+        "name": "Rétribution actuelle de l’injection"
       },
-      "feed_in_next_price": { "name": "Prochaine rémunération de l’injection" },
-      "feed_in_today_min": { "name": "Rémunération minimale de l’injection" },
-      "feed_in_today_max": { "name": "Rémunération maximale de l’injection" },
+      "feed_in_next_price": { "name": "Prochaine rétribution de l’injection" },
+      "feed_in_today_min": { "name": "Rétribution minimale de l’injection" },
+      "feed_in_today_max": { "name": "Rétribution maximale de l’injection" },
       "feed_in_average_price": {
-        "name": "Rémunération moyenne de l’injection"
+        "name": "Rétribution moyenne de l’injection"
       },
       "grid_usage_current_price": {
         "name": "Tarif actuel d’utilisation du réseau"
@@ -49,24 +49,30 @@
       "grid_usage_average_price": {
         "name": "Tarif moyen d’utilisation du réseau"
       },
-      "grid_current_price": { "name": "Tarif réseau total actuel" },
-      "grid_next_price": { "name": "Prochain tarif réseau total" },
+      "grid_current_price": {
+        "name": "Tarif réseau actuel, taxes comprises"
+      },
+      "grid_next_price": {
+        "name": "Prochain tarif réseau, taxes comprises"
+      },
       "grid_today_min": {
-        "name": "Quart d’heure le moins cher – tarif réseau total"
+        "name": "Quart d’heure le moins cher – réseau, taxes comprises"
       },
       "grid_today_max": {
-        "name": "Quart d’heure le plus cher – tarif réseau total"
+        "name": "Quart d’heure le plus cher – réseau, taxes comprises"
       },
-      "grid_average_price": { "name": "Tarif réseau total moyen" },
-      "integrated_current_price": { "name": "Tarif global actuel" },
-      "integrated_next_price": { "name": "Prochain tarif global" },
+      "grid_average_price": {
+        "name": "Tarif réseau moyen, taxes comprises"
+      },
+      "integrated_current_price": { "name": "Prix total actuel" },
+      "integrated_next_price": { "name": "Prochain prix total" },
       "integrated_today_min": {
-        "name": "Quart d’heure le moins cher – tarif global"
+        "name": "Quart d’heure le moins cher – prix total"
       },
       "integrated_today_max": {
-        "name": "Quart d’heure le plus cher – tarif global"
+        "name": "Quart d’heure le plus cher – prix total"
       },
-      "integrated_average_price": { "name": "Tarif global moyen" }
+      "integrated_average_price": { "name": "Prix total moyen" }
     }
   }
 }
