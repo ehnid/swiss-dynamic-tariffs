@@ -1,7 +1,7 @@
 const CARD_TAG = "swiss-dynamic-tariffs-card";
 const CARD_TYPE = `custom:${CARD_TAG}`;
 const STRATEGY_TYPE = "swiss-dynamic-tariffs";
-const FRONTEND_VERSION = "0.5.3";
+const FRONTEND_VERSION = "0.5.4";
 const PANEL_TAG = `swiss-dynamic-tariffs-panel-${FRONTEND_VERSION.replaceAll(
   ".",
   "-",
@@ -560,7 +560,7 @@ function timeTicks(minimum, maximum, count) {
 }
 
 function chartDimensions(measuredHostWidth) {
-  // The first render happens before an automatic panel card is attached.
+  // The first render happens before a dashboard overview card is attached.
   // A moderate fallback is replaced immediately by ResizeObserver.
   const hostWidth = measuredHostWidth > 0 ? measuredHostWidth : 560;
   const compact = hostWidth <= 600;
@@ -1843,7 +1843,7 @@ class SwissDynamicTariffsCard extends HTMLElement {
 /*
  * The Custom Elements registry forbids registering the same constructor under
  * two names. A distinct subclass keeps the public Lovelace card tag stable
- * while allowing the automatic panel card to be versioned for cache busting.
+ * while allowing the dashboard's internal card to be versioned for caching.
  */
 class SwissDynamicTariffsPanelCard extends SwissDynamicTariffsCard {}
 
@@ -1893,6 +1893,10 @@ class SwissDynamicTariffsPanel extends HTMLElement {
 
   set route(route) {
     this._route = route;
+  }
+
+  setConfig(config) {
+    this._config = config;
   }
 
   _render() {
@@ -2125,15 +2129,9 @@ class SwissDynamicTariffsDashboardStrategy extends HTMLElement {
           title: text.dashboardTitle,
           path: "tariffs",
           icon: "mdi:chart-timeline-variant",
+          type: "panel",
           cards: cards.length
-            ? [
-                {
-                  type: "grid",
-                  columns: 1,
-                  square: false,
-                  cards,
-                },
-              ]
+            ? [{ type: `custom:${PANEL_TAG}` }]
             : [
                 {
                   type: "markdown",

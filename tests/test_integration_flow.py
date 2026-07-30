@@ -2,9 +2,6 @@ from custom_components import swiss_dynamic_tariffs
 from custom_components.swiss_dynamic_tariffs.const import (
     DOMAIN,
     FRONTEND_URL,
-    NAME,
-    PANEL_COMPONENT_NAME,
-    PANEL_URL_PATH,
     VERSION,
 )
 from homeassistant.config_entries import ConfigEntryState
@@ -25,9 +22,9 @@ async def test_setup_registers_frontend_module(hass):
             "custom_components.swiss_dynamic_tariffs.ha_frontend.add_extra_js_url",
         ) as add_extra_js_url,
         patch(
-            "custom_components.swiss_dynamic_tariffs.panel_custom.async_register_panel",
+            "custom_components.swiss_dynamic_tariffs.async_ensure_user_dashboard",
             new=AsyncMock(),
-        ) as register_panel,
+        ) as ensure_dashboard,
     ):
         result = await swiss_dynamic_tariffs.async_setup(hass, {})
 
@@ -41,19 +38,12 @@ async def test_setup_registers_frontend_module(hass):
         hass,
         f"{FRONTEND_URL}?v={VERSION}",
     )
-    register_panel.assert_awaited_once_with(
-        hass,
-        frontend_url_path=PANEL_URL_PATH,
-        webcomponent_name=PANEL_COMPONENT_NAME,
-        sidebar_title=NAME,
-        sidebar_icon="mdi:chart-timeline-variant",
-        module_url=f"{FRONTEND_URL}?v={VERSION}",
-    )
+    ensure_dashboard.assert_awaited_once_with(hass)
 
 
 @pytest.mark.asyncio
-async def test_setup_survives_dashboard_url_collision(hass):
-    """Test that a conflicting user panel does not break the integration."""
+async def test_setup_survives_dashboard_creation_failure(hass):
+    """Test that a dashboard failure does not prevent sensor setup."""
 
     hass.http = Mock(async_register_static_paths=AsyncMock())
 
@@ -62,8 +52,8 @@ async def test_setup_survives_dashboard_url_collision(hass):
             "custom_components.swiss_dynamic_tariffs.ha_frontend.add_extra_js_url",
         ),
         patch(
-            "custom_components.swiss_dynamic_tariffs.panel_custom.async_register_panel",
-            new=AsyncMock(side_effect=ValueError("URL already used")),
+            "custom_components.swiss_dynamic_tariffs.async_ensure_user_dashboard",
+            new=AsyncMock(side_effect=RuntimeError("Dashboard API unavailable")),
         ),
     ):
         result = await swiss_dynamic_tariffs.async_setup(hass, {})

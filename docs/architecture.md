@@ -116,12 +116,38 @@ The linking attributes are intentionally data, not presentation: the frontend
 can discover renamed entities while provider and entity code remain unaware of
 dashboard layout.
 
+## Dashboard ownership
+
+`dashboard.py` provisions one Lovelace storage dashboard through Home
+Assistant's active `DashboardsCollection`. Because the same collection backs
+the dashboard settings UI, the created item behaves like a user-created
+dashboard: title, icon, sidebar visibility and ordering can be changed, and the
+dashboard can be deleted.
+
+A small integration-owned storage marker records successful initial
+provisioning. If the marker exists but the dashboard does not, deletion is
+treated as intentional and the dashboard is not recreated. Existing matching
+dashboards are adopted without modifying their metadata or content. The
+dashboard configuration contains only the
+`custom:swiss-dynamic-tariffs` strategy; tariff cards remain dynamically
+discovered at render time.
+
+Home Assistant currently exposes storage-dashboard creation through its
+WebSocket collection but not as a public Python helper. The integration obtains
+the already-loaded collection from the registered list command. It must not
+open a second collection on the same storage file, because that would bypass
+the live listeners responsible for immediate UI updates and later deletion.
+
+See
+[ADR 0002: User-managed dashboard lifecycle](adr/0002-user-managed-dashboard.md)
+for the ownership and deletion rationale.
+
 ## Frontend data flow
 
 The bundled JavaScript registers:
 
 - a custom tariff card;
-- the automatic sidebar panel;
+- a responsive overview card used by the dashboard strategy;
 - a dashboard strategy;
 - card-picker metadata.
 
@@ -170,7 +196,8 @@ Today and tomorrow are always available as navigation choices. Additional
 buttons are created for every further date present in the provider data; there
 is no hard-coded 24-hour forecast limit.
 
-The automatic panel caps each complete tariff card—not just its SVG—at 40% of
+The strategy generates a panel-layout view containing one responsive overview
+card. That overview caps each complete tariff card—not just its SVG—at 40% of
 `window.screen.width` on desktop. The limit therefore follows the user's screen,
 not the width of the Home Assistant content frame. On the 1920 × 1080 reference
 screen this is 768 pixels. If the browser window is narrowed, that same maximum
@@ -211,12 +238,12 @@ The JavaScript file is served through Home Assistant's static-path support. The
 query-string cache key is read from `manifest.json`, so every integration
 version loads a matching frontend bundle.
 
-The automatic sidebar panel and its internal card also use a component name
-derived from that version. Browsers cannot redefine an existing custom element,
-so versioning the element prevents a Home Assistant reconnect from silently
-retaining the previous graph implementation. The public custom-card tag remains
-stable for Lovelace compatibility and may require a page reload after an
-upgrade.
+The strategy's responsive overview and its internal card also use component
+names derived from that version. Browsers cannot redefine an existing custom
+element, so versioning the elements prevents a Home Assistant reconnect from
+silently retaining the previous graph implementation. The public custom-card
+tag remains stable for Lovelace compatibility and may require a page reload
+after an upgrade.
 
 The public card and versioned internal card must use distinct JavaScript
 constructors. The Custom Elements registry rejects registering one constructor

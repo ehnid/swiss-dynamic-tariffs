@@ -70,6 +70,7 @@ global.window = {};
 """
         + source
         + """
+(async () => {
 Date.now = () => Date.parse("2026-01-15T12:07:00Z");
 const entityId = "sensor.test_current_price";
 const response = [[
@@ -122,6 +123,22 @@ card._bindDayNavigation();
 dayClick();
 const mobileDimensions = chartDimensions(360);
 const desktopDimensions = chartDimensions(768);
+const generatedDashboard = await SwissDynamicTariffsDashboardStrategy.generate(
+  {},
+  {
+    locale: { language: "en" },
+    states: {
+      "sensor.test_forecast": {
+        entity_id: "sensor.test_forecast",
+        attributes: {
+          prices: [],
+          available_from: "2026-01-15T12:15:00Z",
+          available_until: "2026-01-16T00:00:00Z",
+        },
+      },
+    },
+  },
+);
 process.stdout.write(JSON.stringify({
   winterStart: new Date(
     calendarDateStart("2026-01-15", "Europe/Zurich"),
@@ -142,11 +159,16 @@ process.stdout.write(JSON.stringify({
     largerScreen: desktopCardWidth(2560),
     fallback: desktopCardWidth(undefined),
   },
+  dashboardLayout: {
+    viewType: generatedDashboard.views[0].type,
+    cardType: generatedDashboard.views[0].cards[0].type,
+  },
   dayInteraction: {
     selectedOffset: card._selectedDayOffset,
     renderCount,
   },
 }));
+})();
 """,
         encoding="utf-8",
     )
@@ -183,6 +205,10 @@ process.stdout.write(JSON.stringify({
             "referenceScreen": 768,
             "largerScreen": 1024,
             "fallback": 480,
+        },
+        "dashboardLayout": {
+            "viewType": "panel",
+            "cardType": "custom:swiss-dynamic-tariffs-panel-0-5-4",
         },
         "dayInteraction": {"selectedOffset": 1, "renderCount": 1},
     }

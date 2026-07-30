@@ -36,7 +36,11 @@ The integration creates current, next, minimum, maximum and average sensors for
 every price component supplied by the selected tariff. A forecast sensor exposes
 all published future quarter-hour periods.
 
-The automatic sidebar dashboard provides:
+The integration creates a regular user-managed Home Assistant dashboard. It can
+be reordered, renamed, hidden from the sidebar or deleted under
+**Settings → Dashboards**. A deleted dashboard is not recreated automatically.
+
+The dashboard provides:
 
 - a responsive tariff frame capped at 40% of the current screen width on
   desktops and using the full available width on phones;

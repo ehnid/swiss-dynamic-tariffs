@@ -10,9 +10,9 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Swiss Dynamic Tariffs brings quarter-hourly prices from supported Swiss energy
-providers into Home Assistant. It creates translated sensors and an automatic,
-interactive tariff dashboard without requiring YAML or an additional chart
-card.
+providers into Home Assistant. It creates translated sensors and a
+user-managed, interactive tariff dashboard without requiring YAML or an
+additional chart card.
 
 ## Motivation
 
@@ -35,7 +35,8 @@ planning.
 - Current, next, minimum, maximum and average price sensors are created for
   every available price component.
 - A forecast sensor exposes every quarter-hour period published by the provider.
-- The automatic dashboard combines today's recorded prices with future prices.
+- The user-managed dashboard combines today's recorded prices with future
+  prices.
 - Day buttons cover every available forecast date, including data beyond
   24 hours.
 - The compact chart includes labelled axes, values on hover and an expandable
@@ -119,9 +120,16 @@ stable, while users may rename entity IDs normally.
 
 ## Dashboard
 
-After the first tariff is configured, **Swiss Dynamic Tariffs** is added to the
-Home Assistant sidebar automatically. It contains one card for every configured
+After the first tariff is configured, **Swiss Dynamic Tariffs** is created as a
+regular Home Assistant storage dashboard and added to the sidebar. It appears
+under **Settings → Dashboards**, where users can change its title, icon,
+visibility and order or delete it. It contains one card for every configured
 forecast.
+
+The integration creates this dashboard only once. If a user deletes it, the
+integration respects that decision and does not recreate it after a restart.
+To restore it later, add a dashboard manually and select the
+**Swiss Dynamic Tariffs** Community strategy.
 
 Each card provides:
 
@@ -165,8 +173,8 @@ recovered after the provider has stopped publishing those past periods.
 
 Add a card by entity and choose a **Tariff forecast** sensor. On supported Home
 Assistant versions, the card picker suggests **Swiss Dynamic Tariffs – Tariff
-forecast** automatically. A Community dashboard strategy is also available
-under **Settings → Dashboards → Add dashboard**.
+forecast** automatically. The **Swiss Dynamic Tariffs** Community dashboard
+strategy is also available under **Settings → Dashboards → Add dashboard**.
 
 ## Data behaviour and limitations
 
@@ -182,11 +190,11 @@ under **Settings → Dashboards → Add dashboard**.
 
 ### A dashboard update is not visible
 
-Update the integration in HACS and restart Home Assistant. The automatic
-sidebar panel uses a release-specific component name and frontend cache key. A
-manually added card may additionally require a browser refresh or a reload of
-the Home Assistant Companion app because browsers cannot replace an already
-registered custom element in a running page.
+Update the integration in HACS and restart Home Assistant. The dashboard's
+responsive overview card uses a release-specific component name and frontend
+cache key. A manually added card may additionally require a browser refresh or
+a reload of the Home Assistant Companion app because browsers cannot replace an
+already registered custom element in a running page.
 
 ### No past values are shown
 
@@ -204,6 +212,7 @@ If only today and tomorrow are returned, no additional date can be displayed.
 - [Contributing](CONTRIBUTING.md)
 - [Architecture](docs/architecture.md)
 - [Architecture decision: dashboard time series](docs/adr/0001-dashboard-time-series.md)
+- [Architecture decision: user-managed dashboard](docs/adr/0002-user-managed-dashboard.md)
 
 ## License
 
