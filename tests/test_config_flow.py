@@ -163,3 +163,69 @@ async def test_multiple_tariffs_from_same_provider_are_allowed(hass):
 
     assert home["type"] == "create_entry"
     assert business["type"] == "create_entry"
+
+
+@pytest.mark.asyncio
+async def test_options_flow_restores_dashboard(hass):
+    """Expose a confirmed dashboard repair action in integration options."""
+
+    await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": "user"},
+        data={"provider": "bkw"},
+    )
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] == "menu"
+    assert result["menu_options"] == ["dashboard"]
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {"next_step_id": "dashboard"},
+    )
+    assert result["type"] == "form"
+    assert result["step_id"] == "dashboard"
+
+    with patch(
+        "custom_components.swiss_dynamic_tariffs.config_flow."
+        "async_ensure_user_dashboard",
+        new=AsyncMock(),
+    ) as restore_dashboard:
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {},
+        )
+
+    assert result["type"] == "create_entry"
+    restore_dashboard.assert_awaited_once_with(hass, force=True)
+
+
+@pytest.mark.asyncio
+async def test_options_flow_reports_dashboard_restore_failure(hass):
+    """Keep the restore form open with an actionable error on failure."""
+
+    await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": "user"},
+        data={"provider": "bkw"},
+    )
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {"next_step_id": "dashboard"},
+    )
+
+    with patch(
+        "custom_components.swiss_dynamic_tariffs.config_flow."
+        "async_ensure_user_dashboard",
+        new=AsyncMock(side_effect=RuntimeError("unavailable")),
+    ):
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {},
+        )
+
+    assert result["type"] == "form"
+    assert result["errors"] == {"base": "dashboard_creation_failed"}

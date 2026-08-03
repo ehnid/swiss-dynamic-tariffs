@@ -13,6 +13,23 @@
       "already_configured": "This provider and tariff are already configured."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Maintenance",
+        "menu_options": {
+          "dashboard": "Create or restore dashboard"
+        }
+      },
+      "dashboard": {
+        "title": "Create or restore dashboard",
+        "description": "Creates the Swiss Dynamic Tariffs dashboard if it is missing. An existing dashboard and your customizations remain unchanged."
+      }
+    },
+    "error": {
+      "dashboard_creation_failed": "The dashboard could not be created. Check the Home Assistant log and try again."
+    }
+  },
   "entity": {
     "sensor": {
       "forecast": { "name": "Tariff forecast" },

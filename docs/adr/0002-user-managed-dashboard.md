@@ -27,14 +27,19 @@ choice rather than a temporary state undone at the next restart.
 4. The Community strategy remains available for manually created dashboards,
    but automatic dashboard loading does not wait for strategy registration.
 5. A separate integration storage marker records successful provisioning.
-6. A marker without a matching dashboard means the user deleted it. The
-   integration does not recreate it.
+6. A current-layout marker without a matching dashboard means the user deleted
+   it. The integration does not recreate it. A legacy marker without a
+   dashboard is migrated once by creating the current static layout, because
+   users may have removed the earlier dashboard after its strategy timed out.
 7. An existing dashboard with the integration's URL or title is retained
    without overwriting user metadata or configuration.
 8. Dashboard provisioning failure is logged but does not prevent tariff
    entities from loading.
 9. A layout version in the marker migrates the exact strategy-only config from
    releases through 0.5.6. Any user-modified config is left untouched.
+10. Every tariff entry exposes a config-entry options action that explicitly
+    creates or restores a missing dashboard. This user-triggered action may
+    override the deletion marker, but it never overwrites an existing layout.
 
 ## Why the active collection
 
@@ -98,15 +103,18 @@ collection, validation, listeners and save scheduling.
   public Python dashboard-creation API exists.
 - The first automatic creation requires Lovelace storage mode and its active
   WebSocket collection.
-- Restoring a deliberately deleted dashboard is a manual action through
-  **Settings → Dashboards → Add dashboard**.
+- Restoring a deliberately deleted dashboard requires the explicit integration
+  options action or manual creation under **Settings → Dashboards**.
 
 ## Invariants for future changes
 
 - Never overwrite an existing matching dashboard.
 - Migrate only the exact legacy strategy-only configuration created by the
   integration.
-- Never recreate a dashboard after intentional deletion.
+- Never recreate a dashboard deleted after the current layout was provisioned;
+  recover a missing legacy dashboard once during layout migration.
+- Let the explicit options action override only the deletion marker, never the
+  existing-dashboard ownership guard.
 - Never delete the user-owned dashboard when a tariff entry is unloaded.
 - Use the active Home Assistant collection, not a parallel storage instance.
 - Keep provisioning failure independent from tariff sensor availability.

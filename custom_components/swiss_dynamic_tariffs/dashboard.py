@@ -96,8 +96,17 @@ def _matching_dashboard(items: list[dict[str, Any]]) -> dict[str, Any] | None:
     )
 
 
-async def async_ensure_user_dashboard(hass: HomeAssistant) -> None:
-    """Create the tariff dashboard once and leave later ownership to the user."""
+async def async_ensure_user_dashboard(
+    hass: HomeAssistant,
+    *,
+    force: bool = False,
+) -> None:
+    """Create the tariff dashboard while preserving user-owned content.
+
+    ``force`` only overrides the retained deletion marker. It deliberately
+    does not replace or edit an existing dashboard, so the options-flow repair
+    action remains safe for user-customized layouts.
+    """
 
     marker_store = Store[dict[str, bool | int]](
         hass,
@@ -134,9 +143,17 @@ async def async_ensure_user_dashboard(hass: HomeAssistant) -> None:
             await marker_store.async_save(current_marker)
         return
 
-    # A retained marker with no matching dashboard means that the user deleted
-    # it. Do not recreate it and thereby undo an explicit UI action.
-    if marker and marker.get("provisioned"):
+    # A current marker with no matching dashboard means that the user deleted
+    # the static dashboard and it must stay deleted. An older marker can also
+    # remain after the user removed the strategy-based dashboard because it no
+    # longer loaded. Recreate that legacy case once so the fixed layout is not
+    # permanently suppressed by stale provisioning state.
+    if (
+        marker
+        and marker.get("provisioned")
+        and marker.get("layout_version", 1) >= DASHBOARD_LAYOUT_VERSION
+        and not force
+    ):
         return
 
     item = await collection.async_create_item(

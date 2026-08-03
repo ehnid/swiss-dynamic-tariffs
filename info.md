@@ -41,6 +41,9 @@ earlier periods that remain available from the source.
 The integration creates a regular user-managed Home Assistant dashboard. It can
 be reordered, renamed, hidden from the sidebar or deleted under
 **Settings → Dashboards**. A deleted dashboard is not recreated automatically.
+To restore or initially create it, open **Settings → Devices & services → Swiss
+Dynamic Tariffs → Configure**, select **Create or restore dashboard**, and
+confirm. Existing dashboard content is never overwritten.
 
 The dashboard provides:
 

@@ -13,6 +13,23 @@
       "already_configured": "Dieser Anbieter und Tarif sind bereits konfiguriert."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Wartung",
+        "menu_options": {
+          "dashboard": "Dashboard erstellen oder wiederherstellen"
+        }
+      },
+      "dashboard": {
+        "title": "Dashboard erstellen oder wiederherstellen",
+        "description": "Erstellt das Dashboard für Swiss Dynamic Tariffs, falls es fehlt. Ein bestehendes Dashboard und Ihre Anpassungen bleiben unverändert."
+      }
+    },
+    "error": {
+      "dashboard_creation_failed": "Das Dashboard konnte nicht erstellt werden. Prüfen Sie das Home-Assistant-Protokoll und versuchen Sie es erneut."
+    }
+  },
   "entity": {
     "sensor": {
       "forecast": { "name": "Tarifprognose" },

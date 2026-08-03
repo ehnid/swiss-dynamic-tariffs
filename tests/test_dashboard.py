@@ -217,13 +217,18 @@ async def test_user_modified_legacy_dashboard_is_not_migrated(hass):
 
 
 @pytest.mark.asyncio
-async def test_deleted_dashboard_is_not_recreated(hass):
-    """Treat a retained marker without a dashboard as an explicit deletion."""
+async def test_current_dashboard_deletion_is_not_recreated(hass):
+    """Treat a current marker without a dashboard as an explicit deletion."""
 
     collection = Mock()
     collection.async_items.return_value = []
     collection.async_create_item = AsyncMock()
-    load_marker = AsyncMock(return_value={"provisioned": True})
+    load_marker = AsyncMock(
+        return_value={
+            "provisioned": True,
+            "layout_version": DASHBOARD_LAYOUT_VERSION,
+        }
+    )
     save_marker = AsyncMock()
 
     with (
@@ -245,6 +250,91 @@ async def test_deleted_dashboard_is_not_recreated(hass):
 
     collection.async_create_item.assert_not_awaited()
     save_marker.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_force_restores_a_deleted_current_dashboard(hass):
+    """Let the explicit options-flow action override the deletion marker."""
+
+    collection = Mock()
+    collection.async_items.return_value = []
+    collection.async_create_item = AsyncMock(return_value={"id": DASHBOARD_URL_PATH})
+    dashboard_config = Mock(async_save=AsyncMock())
+    hass.data[LOVELACE_DATA] = SimpleNamespace(
+        dashboards={DASHBOARD_URL_PATH: dashboard_config}
+    )
+    save_marker = AsyncMock()
+
+    with (
+        patch(
+            "custom_components.swiss_dynamic_tariffs.dashboard.Store.async_load",
+            new=AsyncMock(
+                return_value={
+                    "provisioned": True,
+                    "layout_version": DASHBOARD_LAYOUT_VERSION,
+                }
+            ),
+        ),
+        patch(
+            "custom_components.swiss_dynamic_tariffs.dashboard.Store.async_save",
+            new=save_marker,
+        ),
+        patch(
+            "custom_components.swiss_dynamic_tariffs.dashboard."
+            "_active_dashboards_collection",
+            return_value=collection,
+        ),
+    ):
+        await async_ensure_user_dashboard(hass, force=True)
+
+    collection.async_create_item.assert_awaited_once()
+    dashboard_config.async_save.assert_awaited_once_with(_automatic_dashboard_config())
+    save_marker.assert_awaited_once_with(
+        {
+            "provisioned": True,
+            "layout_version": DASHBOARD_LAYOUT_VERSION,
+        }
+    )
+
+
+@pytest.mark.asyncio
+async def test_missing_legacy_dashboard_is_recreated_with_static_layout(hass):
+    """Repair a removed legacy strategy dashboard once during migration."""
+
+    collection = Mock()
+    collection.async_items.return_value = []
+    collection.async_create_item = AsyncMock(return_value={"id": DASHBOARD_URL_PATH})
+    dashboard_config = Mock(async_save=AsyncMock())
+    hass.data[LOVELACE_DATA] = SimpleNamespace(
+        dashboards={DASHBOARD_URL_PATH: dashboard_config}
+    )
+    save_marker = AsyncMock()
+
+    with (
+        patch(
+            "custom_components.swiss_dynamic_tariffs.dashboard.Store.async_load",
+            new=AsyncMock(return_value={"provisioned": True}),
+        ),
+        patch(
+            "custom_components.swiss_dynamic_tariffs.dashboard.Store.async_save",
+            new=save_marker,
+        ),
+        patch(
+            "custom_components.swiss_dynamic_tariffs.dashboard."
+            "_active_dashboards_collection",
+            return_value=collection,
+        ),
+    ):
+        await async_ensure_user_dashboard(hass)
+
+    collection.async_create_item.assert_awaited_once()
+    dashboard_config.async_save.assert_awaited_once_with(_automatic_dashboard_config())
+    save_marker.assert_awaited_once_with(
+        {
+            "provisioned": True,
+            "layout_version": DASHBOARD_LAYOUT_VERSION,
+        }
+    )
 
 
 @pytest.mark.asyncio

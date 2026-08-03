@@ -13,6 +13,23 @@
       "already_configured": "Ce fournisseur et ce tarif sont déjà configurés."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Maintenance",
+        "menu_options": {
+          "dashboard": "Créer ou restaurer le tableau de bord"
+        }
+      },
+      "dashboard": {
+        "title": "Créer ou restaurer le tableau de bord",
+        "description": "Crée le tableau de bord Swiss Dynamic Tariffs s’il est absent. Un tableau de bord existant et vos personnalisations restent inchangés."
+      }
+    },
+    "error": {
+      "dashboard_creation_failed": "Le tableau de bord n’a pas pu être créé. Consultez le journal de Home Assistant et réessayez."
+    }
+  },
   "entity": {
     "sensor": {
       "forecast": { "name": "Prévision tarifaire" },

@@ -135,10 +135,16 @@ one tariff frame for every configured forecast.
 The integration creates this dashboard only once. If a user deletes it, the
 integration respects that decision and does not recreate it after a restart.
 An unchanged strategy-only dashboard created by version 0.5.6 is migrated to
-the regular bundled panel card automatically during the next restart. User-edited
+the regular bundled panel card automatically during the next restart. A legacy
+provisioning marker also repairs a missing old dashboard once. User-edited
 dashboard content is never replaced.
-To restore it later, add a dashboard manually and select the
-**Swiss Dynamic Tariffs** Community strategy.
+
+To create or restore the dashboard at any time, open **Settings → Devices &
+services → Swiss Dynamic Tariffs → Configure**, choose **Create or restore
+dashboard**, and confirm. The same action is available on every configured
+tariff entry. It creates only a missing dashboard and never overwrites an
+existing one. Manual creation with the **Swiss Dynamic Tariffs** Community
+strategy remains available under **Settings → Dashboards → Add dashboard**.
 
 Each card provides:
 

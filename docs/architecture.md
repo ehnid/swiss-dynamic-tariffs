@@ -127,12 +127,20 @@ dashboard: title, icon, sidebar visibility and ordering can be changed, and the
 dashboard can be deleted.
 
 A small integration-owned storage marker records successful initial
-provisioning. If the marker exists but the dashboard does not, deletion is
-treated as intentional and the dashboard is not recreated. Existing matching
-dashboards are adopted without modifying their metadata or user-edited content.
+provisioning. If a current-layout marker exists but the dashboard does not,
+deletion is treated as intentional and the dashboard is not recreated. A
+missing dashboard with a legacy marker is recreated once during layout
+migration; this repairs installations where users removed the strategy-based
+dashboard after it failed to load. Existing matching dashboards are adopted
+without modifying their metadata or user-edited content.
 The dashboard configuration contains a normal panel view with the stable
 `custom:swiss-dynamic-tariffs-panel` card; tariff entities remain dynamically
 discovered at render time.
+
+The config-entry options flow exposes an explicit dashboard repair action. It
+calls the same provisioning function with permission to ignore a current
+deletion marker, but the existing-dashboard guard remains in force. The action
+can therefore restore a missing dashboard without overwriting user content.
 
 Releases through 0.5.6 stored only the
 `custom:swiss-dynamic-tariffs` strategy. A layout version in the provisioning
