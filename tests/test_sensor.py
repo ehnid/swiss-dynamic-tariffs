@@ -97,6 +97,15 @@ class FakeCoordinator:
         """Return all fake future periods, ignoring the tariff type."""
         return [self.next_period, self.cheapest, self.most_expensive]
 
+    def published_periods(self, tariff_type=None):
+        """Return the complete fake provider window, ignoring the tariff type."""
+        return [
+            self.current_period,
+            self.next_period,
+            self.cheapest,
+            self.most_expensive,
+        ]
+
 
 @pytest.mark.asyncio
 async def test_sensor_value():
@@ -205,8 +214,8 @@ def test_sensor_next_price():
     assert sensor.extra_state_attributes["tariff_role"] == SENSOR_NEXT_PRICE
 
 
-def test_forecast_sensor_exposes_all_future_quarter_hours():
-    """Test the dedicated forecast sensor state and price list."""
+def test_forecast_sensor_exposes_complete_published_window():
+    """Include source-retained history in the forecast sensor price list."""
 
     entry = Mock()
     entry.entry_id = "test"
@@ -224,15 +233,24 @@ def test_forecast_sensor_exposes_all_future_quarter_hours():
     )
     sensor = SwissDynamicTariffForecastSensor(coordinator, entry)
 
-    assert sensor.native_value == 3
+    assert sensor.native_value == 4
     assert sensor.entity_description.device_class == SensorDeviceClass.DURATION
     assert sensor.entity_description.native_unit_of_measurement == UnitOfTime.HOURS
     assert sensor.extra_state_attributes == {
-        "available_from": FakeCoordinator.next_period.start,
+        "available_from": FakeCoordinator.current_period.start,
         "available_until": FakeCoordinator.most_expensive.end,
-        "period_count": 3,
+        "period_count": 4,
         "tariff_entry_id": "test",
         "prices": [
+            {
+                "start": FakeCoordinator.current_period.start.isoformat(),
+                "end": FakeCoordinator.current_period.end.isoformat(),
+                "electricity": 0.25,
+                "feed_in": 0.10,
+                "grid_usage": 0.04,
+                "grid": 0.05,
+                "integrated": 0.30,
+            },
             {
                 "start": FakeCoordinator.next_period.start.isoformat(),
                 "end": FakeCoordinator.next_period.end.isoformat(),
@@ -264,11 +282,11 @@ def test_forecast_sensor_exposes_all_future_quarter_hours():
     }
 
 
-def test_forecast_sensor_without_future_data():
-    """Test the forecast sensor when no future periods are available."""
+def test_forecast_sensor_without_published_data():
+    """Test the forecast sensor when no provider periods are available."""
 
     coordinator = FakeCoordinator()
-    coordinator.future_periods = Mock(return_value=[])
+    coordinator.published_periods = Mock(return_value=[])
     entry = Mock(entry_id="test")
     sensor = SwissDynamicTariffForecastSensor(coordinator, entry)
 

@@ -1,5 +1,6 @@
 """Test providers based on the Swiss standard tariff API."""
 
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -88,6 +89,39 @@ async def test_primeo_tariff_variant():
     args, kwargs = session.get.call_args
     assert args == (PRIMEO_API_URL,)
     assert kwargs["params"]["tariff_name"] == "NetzDynamischAVAG"
+
+
+@pytest.mark.asyncio
+async def test_primeo_preserves_complete_published_window():
+    """Keep every Primeo quarter-hour even when consecutive prices are equal."""
+
+    start = datetime.fromisoformat("2026-08-03T00:00:00+02:00")
+    periods = []
+    for index in range(192):
+        period_start = start + timedelta(minutes=15 * index)
+        periods.append(
+            {
+                "start_timestamp": period_start.isoformat(),
+                "end_timestamp": (period_start + timedelta(minutes=15)).isoformat(),
+                "electricity": [{"unit": "CHF_kWh", "value": 0.13}],
+                "grid_usage": [{"unit": "CHF_kWh", "value": 0.05}],
+                "grid": [{"unit": "CHF_kWh", "value": 0.0803}],
+                "integrated": [{"unit": "CHF_kWh", "value": 0.2103}],
+            }
+        )
+    session = _mock_session(
+        {
+            "publication_timestamp": "2026-08-02T17:30:00+02:00",
+            "tariff_name": "NetzDynamisch",
+            "prices": periods,
+        }
+    )
+
+    tariffs = await PrimeoProvider(session, "NetzDynamisch").async_get_tariffs()
+
+    assert len(tariffs) == 192
+    assert tariffs[0].start == start
+    assert tariffs[-1].end == start + timedelta(days=2)
 
 
 @pytest.mark.asyncio

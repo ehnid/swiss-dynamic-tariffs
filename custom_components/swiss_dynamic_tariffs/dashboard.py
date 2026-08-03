@@ -20,6 +20,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.storage import Store
 
 from .const import (
+    DASHBOARD_CARD_TYPE,
+    DASHBOARD_LAYOUT_VERSION,
     DASHBOARD_STORAGE_KEY,
     DASHBOARD_STORAGE_VERSION,
     DASHBOARD_STRATEGY_TYPE,
@@ -31,6 +33,28 @@ _LOGGER = logging.getLogger(__name__)
 
 _DASHBOARDS_LIST_COMMAND = "lovelace/dashboards/list"
 _DASHBOARD_ICON = "mdi:chart-timeline-variant"
+
+
+def _automatic_dashboard_config() -> dict[str, Any]:
+    """Return the self-updating dashboard without a strategy dependency."""
+
+    return {
+        "views": [
+            {
+                "title": NAME,
+                "path": "tariffs",
+                "icon": _DASHBOARD_ICON,
+                "type": "panel",
+                "cards": [{"type": DASHBOARD_CARD_TYPE}],
+            }
+        ]
+    }
+
+
+def _legacy_strategy_config() -> dict[str, Any]:
+    """Return the exact configuration provisioned before layout version 2."""
+
+    return {"strategy": {"type": DASHBOARD_STRATEGY_TYPE}}
 
 
 def _active_dashboards_collection(
@@ -75,7 +99,7 @@ def _matching_dashboard(items: list[dict[str, Any]]) -> dict[str, Any] | None:
 async def async_ensure_user_dashboard(hass: HomeAssistant) -> None:
     """Create the tariff dashboard once and leave later ownership to the user."""
 
-    marker_store = Store[dict[str, bool]](
+    marker_store = Store[dict[str, bool | int]](
         hass,
         DASHBOARD_STORAGE_VERSION,
         DASHBOARD_STORAGE_KEY,
@@ -87,8 +111,27 @@ async def async_ensure_user_dashboard(hass: HomeAssistant) -> None:
 
     existing = _matching_dashboard(collection.async_items())
     if existing is not None:
-        if not marker:
-            await marker_store.async_save({"provisioned": True})
+        current_marker = {
+            "provisioned": True,
+            "layout_version": DASHBOARD_LAYOUT_VERSION,
+        }
+        if not marker or marker.get("layout_version", 1) < DASHBOARD_LAYOUT_VERSION:
+            dashboard_path = existing.get(CONF_URL_PATH, DASHBOARD_URL_PATH)
+            config = hass.data[LOVELACE_DATA].dashboards.get(dashboard_path)
+            stored_config = (
+                await config.async_load(False) if config is not None else None
+            )
+            # Only replace the exact strategy-only layout created by earlier
+            # integration versions. Any user edit makes the dashboard theirs
+            # and must remain untouched.
+            if config is not None and stored_config == _legacy_strategy_config():
+                await config.async_save(_automatic_dashboard_config())
+                _LOGGER.info(
+                    "Migrated Swiss Dynamic Tariffs dashboard to a static layout"
+                )
+
+        if marker != current_marker:
+            await marker_store.async_save(current_marker)
         return
 
     # A retained marker with no matching dashboard means that the user deleted
@@ -108,11 +151,16 @@ async def async_ensure_user_dashboard(hass: HomeAssistant) -> None:
 
     try:
         config = hass.data[LOVELACE_DATA].dashboards[DASHBOARD_URL_PATH]
-        await config.async_save({"strategy": {"type": DASHBOARD_STRATEGY_TYPE}})
+        await config.async_save(_automatic_dashboard_config())
     except Exception:
         # Roll back the item created above instead of leaving a blank dashboard.
         await collection.async_delete_item(item[CONF_ID])
         raise
 
-    await marker_store.async_save({"provisioned": True})
+    await marker_store.async_save(
+        {
+            "provisioned": True,
+            "layout_version": DASHBOARD_LAYOUT_VERSION,
+        }
+    )
     _LOGGER.info("Created user-managed Swiss Dynamic Tariffs dashboard")

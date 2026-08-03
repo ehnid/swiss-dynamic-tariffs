@@ -35,7 +35,8 @@ explicit provider/tariff choice.
 
 The integration creates current, next, minimum, maximum and average sensors for
 every price component supplied by the selected tariff. A forecast sensor exposes
-all published future quarter-hour periods.
+the complete quarter-hour window currently published by the provider, including
+earlier periods that remain available from the source.
 
 The integration creates a regular user-managed Home Assistant dashboard. It can
 be reordered, renamed, hidden from the sidebar or deleted under
@@ -46,8 +47,8 @@ The dashboard provides:
 - a responsive tariff frame capped at 40% of the current screen width on
   desktops and using the full available width on phones;
 - a chart with labelled time and price axes that follows the frame size;
-- today's recorded current-price values, including legacy Recorder states,
-  combined with the forecast;
+- today's provider-published values combined with Recorder states for periods
+  no longer returned by the source;
 - Y-axis labels limited to two decimal places while detail values retain their
   precision;
 - a synchronized Y-axis range for all visible tariff graphs, starting at zero
@@ -57,11 +58,11 @@ The dashboard provides:
 - exact hover values and minimum/maximum annotations;
 - an expandable quarter-hour table that remains open during updates.
 
-Past chart values require Home Assistant Recorder/History to record the
-corresponding **Current price** sensors. Forecast display continues to work when
-history is unavailable. Version 0.5.3 ensures that Recorder receives every
-scheduled quarter-hour even when the provider payload or consecutive prices are
-unchanged; gaps created by older versions cannot be filled retrospectively.
+Past values that remain in a provider response do not require Recorder. For
+periods already removed by the provider, Home Assistant Recorder/History must
+record the corresponding **Current price** sensors. Version 0.5.3 ensures that
+Recorder receives every scheduled quarter-hour even when the provider payload
+or consecutive prices are unchanged.
 
 {% if not installed %}
 

@@ -10,7 +10,11 @@ import subprocess
 
 import pytest
 
-from custom_components.swiss_dynamic_tariffs.const import PANEL_COMPONENT_NAME, VERSION
+from custom_components.swiss_dynamic_tariffs.const import (
+    DASHBOARD_CARD_TYPE,
+    PANEL_COMPONENT_NAME,
+    VERSION,
+)
 
 ROOT = Path(__file__).parents[1]
 FRONTEND_PATH = (
@@ -30,6 +34,10 @@ def test_frontend_and_panel_versions_match_manifest():
     assert f'const FRONTEND_VERSION = "{VERSION}";' in source
     assert PANEL_COMPONENT_NAME == (
         f"swiss-dynamic-tariffs-panel-{VERSION.replace('.', '-')}"
+    )
+    assert (
+        f'const DASHBOARD_PANEL_TAG = "{DASHBOARD_CARD_TYPE.removeprefix("custom:")}";'
+        in source
     )
     assert ".grid-line.zero-line" in source
 
@@ -162,6 +170,10 @@ process.stdout.write(JSON.stringify({
   axisPrice: card._formatAxisPrice(0.12345),
   separatePanelCard:
     customElements.get(CARD_TAG) !== customElements.get(PANEL_CARD_TAG),
+  stableDashboardPanel:
+    customElements.get(DASHBOARD_PANEL_TAG) !== undefined &&
+    customElements.get(DASHBOARD_PANEL_TAG) !== customElements.get(PANEL_TAG) &&
+    customElements.get(DASHBOARD_PANEL_TAG) !== customElements.get(CARD_TAG),
   mobileDimensions,
   desktopDimensions,
   desktopCardWidths: {
@@ -219,6 +231,7 @@ process.stdout.write(JSON.stringify({
         "exactPeriod": 0.3,
         "axisPrice": "0.12",
         "separatePanelCard": True,
+        "stableDashboardPanel": True,
         "mobileDimensions": {
             "compact": True,
             "width": 336,
@@ -247,7 +260,7 @@ process.stdout.write(JSON.stringify({
         },
         "dashboardLayout": {
             "viewType": "panel",
-            "cardType": "custom:swiss-dynamic-tariffs-panel-0-5-6",
+            "cardType": "custom:swiss-dynamic-tariffs-panel-0-5-7",
         },
         "textKeysMatch": True,
         "localizedLegend": {

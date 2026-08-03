@@ -21,11 +21,11 @@ choice rather than a temporary state undone at the next restart.
    setup.
 2. Creation uses Home Assistant's already-active `DashboardsCollection`, whose
    listeners register the dashboard and power the dashboard settings UI.
-3. The stored dashboard config selects the
-   `custom:swiss-dynamic-tariffs` Community strategy. Forecast entities remain
-   dynamically discovered by the frontend.
-4. The strategy renders a panel-layout view containing the versioned responsive
-   overview card, preserving the established desktop and mobile layout.
+3. The stored dashboard config contains a normal panel view with the stable
+   `custom:swiss-dynamic-tariffs-panel` card. Forecast entities remain
+   dynamically discovered inside that card.
+4. The Community strategy remains available for manually created dashboards,
+   but automatic dashboard loading does not wait for strategy registration.
 5. A separate integration storage marker records successful provisioning.
 6. A marker without a matching dashboard means the user deleted it. The
    integration does not recreate it.
@@ -33,6 +33,8 @@ choice rather than a temporary state undone at the next restart.
    without overwriting user metadata or configuration.
 8. Dashboard provisioning failure is logged but does not prevent tariff
    entities from loading.
+9. A layout version in the marker migrates the exact strategy-only config from
+   releases through 0.5.6. Any user-modified config is left untouched.
 
 ## Why the active collection
 
@@ -64,6 +66,14 @@ Rejected as the default because discoverability was a core reason for the
 automatic visualization. Manual creation remains the recovery path after a
 user deletes the initially provisioned dashboard.
 
+### Store the Community strategy in the automatic dashboard
+
+Rejected after field use exposed a Home Assistant startup race: Lovelace can
+request the strategy before the extra JavaScript module has registered its
+custom element, producing a timeout and a blank dashboard. A normal custom card
+uses Lovelace's established card-loading path and removes that strategy-level
+failure mode.
+
 ### Write directly to `.storage/lovelace_dashboards`
 
 Rejected because direct file mutation bypasses Home Assistant's in-memory
@@ -78,6 +88,8 @@ collection, validation, listeners and save scheduling.
 - Deletion persists across integration reloads and Home Assistant restarts.
 - Dashboard contents still follow configured tariff forecast entities
   automatically.
+- Opening the automatic dashboard no longer depends on Community-strategy
+  registration timing.
 - No YAML or third-party chart card is required.
 
 ### Trade-offs
@@ -92,6 +104,8 @@ collection, validation, listeners and save scheduling.
 ## Invariants for future changes
 
 - Never overwrite an existing matching dashboard.
+- Migrate only the exact legacy strategy-only configuration created by the
+  integration.
 - Never recreate a dashboard after intentional deletion.
 - Never delete the user-owned dashboard when a tariff entry is unloaded.
 - Use the active Home Assistant collection, not a parallel storage instance.

@@ -35,8 +35,8 @@ planning.
 - Current, next, minimum, maximum and average price sensors are created for
   every available price component.
 - A forecast sensor exposes every quarter-hour period published by the provider.
-- The user-managed dashboard combines today's recorded prices with future
-  prices.
+- The user-managed dashboard combines the complete provider-published window
+  with Recorder values that are no longer available from the provider.
 - Day buttons cover every available forecast date, including data beyond
   24 hours.
 - The compact chart includes labelled axes, values on hover and an expandable
@@ -99,9 +99,11 @@ For every price component supported by a tariff, the integration creates:
 | Most expensive quarter-hour | Highest price among periods that have not ended.          |
 | Average                     | Average across all published periods that have not ended. |
 
-One additional **Tariff forecast** sensor contains all published future periods:
+One additional **Tariff forecast** sensor contains the complete period window
+currently published by the provider. This includes earlier periods of the
+current day when the provider still returns them:
 
-- its state is the total available duration in hours;
+- its state is the total published duration in hours;
 - `prices` contains the quarter-hour periods;
 - each period contains ISO 8601 `start` and `end` timestamps;
 - `available_from`, `available_until` and `period_count` summarize the range;
@@ -126,11 +128,15 @@ stable, while users may rename entity IDs normally.
 After the first tariff is configured, **Swiss Dynamic Tariffs** is created as a
 regular Home Assistant storage dashboard and added to the sidebar. It appears
 under **Settings → Dashboards**, where users can change its title, icon,
-visibility and order or delete it. It contains one card for every configured
-forecast.
+visibility and order or delete it. Its stored layout uses a regular bundled
+card rather than depending on Lovelace strategy registration, and it contains
+one tariff frame for every configured forecast.
 
 The integration creates this dashboard only once. If a user deletes it, the
 integration respects that decision and does not recreate it after a restart.
+An unchanged strategy-only dashboard created by version 0.5.6 is migrated to
+the regular bundled panel card automatically during the next restart. User-edited
+dashboard content is never replaced.
 To restore it later, add a dashboard manually and select the
 **Swiss Dynamic Tariffs** Community strategy.
 
@@ -156,10 +162,12 @@ silently switching dates.
 
 ### Historical values
 
-The forecast API cannot reconstruct prices that have already disappeared from a
-provider response. For today's past values, the card therefore reads Home
-Assistant's history for the matching **Current price** sensors and combines
-those records with the forecast by exact start/end timestamp.
+The provider-published window is the first source for today's past values. This
+directly preserves complete Primeo Energie, AVAG and ELAG days while their API
+continues to return them. If a provider has already removed an earlier period,
+the card reads Home Assistant's history for the matching **Current price**
+sensors and combines those records with the published window by exact start/end
+timestamp. Provider values take precedence where both sources cover a period.
 
 States recorded by releases before 0.5.0 do not contain exact tariff-period
 attributes. The dashboard reconstructs those older values from their Recorder
@@ -167,13 +175,15 @@ timestamps on a quarter-hour grid; newer exact period boundaries take
 precedence wherever available.
 
 This requires Home Assistant Recorder/History to record those sensors. Without
-history data, the card still displays every available forecast period.
+history data, the card still displays every period currently supplied by the
+provider.
 
 From version 0.5.3, the current-price sensors advance after every scheduled
 15-minute refresh even if the provider returns an unchanged list or two
 consecutive periods have the same price. This gives Recorder one state with
-exact boundaries per quarter-hour. Gaps recorded by an older version cannot be
-recovered after the provider has stopped publishing those past periods.
+exact boundaries per quarter-hour. A gap can be recovered while the provider
+still publishes that period; after it disappears from the source, Recorder is
+the only historical source.
 
 ### Adding the card elsewhere
 

@@ -20,10 +20,12 @@ PLATFORMS: list[str] = ["sensor"]
 CURRENCY_PER_KWH = "CHF/kWh"
 FRONTEND_URL: Final = f"/{DOMAIN}/swiss-dynamic-tariffs.js"
 PANEL_COMPONENT_NAME: Final = f"swiss-dynamic-tariffs-panel-{VERSION.replace('.', '-')}"
+DASHBOARD_CARD_TYPE: Final = "custom:swiss-dynamic-tariffs-panel"
 DASHBOARD_URL_PATH: Final = "swiss-dynamic-tariffs"
 DASHBOARD_STRATEGY_TYPE: Final = "custom:swiss-dynamic-tariffs"
 DASHBOARD_STORAGE_KEY: Final = f"{DOMAIN}.dashboard"
 DASHBOARD_STORAGE_VERSION: Final = 1
+DASHBOARD_LAYOUT_VERSION: Final = 2
 
 
 # Configuration keys

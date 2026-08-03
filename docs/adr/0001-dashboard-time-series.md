@@ -23,9 +23,11 @@ periods and continue working when Recorder is disabled.
 
 ## Decision
 
-1. The forecast sensor remains the authoritative source for future periods.
-2. The dashboard reads today's past values from Home Assistant History for the
-   matching **Current price** sensors.
+1. The forecast sensor exposes the complete window currently published by the
+   provider. Past periods are retained when they are present in the source;
+   the integration never extrapolates them.
+2. The dashboard reads today's remaining gaps from Home Assistant History for
+   the matching **Current price** sensors.
 3. Price and forecast sensors expose `tariff_entry_id`; price sensors also
    expose `tariff_component` and `tariff_role`.
 4. The frontend discovers current-price sensors through these stable attributes,
@@ -33,9 +35,9 @@ periods and continue working when Recorder is disabled.
 5. Historical states carrying period attributes retain their exact boundaries.
    Legacy states recorded before those attributes existed are reconstructed
    from their state-change timestamps on a quarter-hour grid.
-6. Historical and forecast periods are merged by exact start/end timestamp.
-   Exact attributes and forecast values overwrite inferred values for the same
-   component and period.
+6. Historical and provider-published periods are merged by exact start/end
+   timestamp. Exact attributes and provider values overwrite inferred values
+   for the same component and period.
 7. History requests include non-significant state changes so equal consecutive
    prices are not lost.
 8. Calendar days are calculated in Home Assistant's configured timezone.
@@ -61,7 +63,8 @@ custom integration.
 
 The merge belongs in the frontend because it is a presentation-specific view:
 backend sensor semantics remain clear—current sensors describe the active
-period and the forecast sensor describes future periods. Provider and
+period and the forecast sensor describes the currently published window.
+Provider and
 coordinator code do not become coupled to a dashboard requirement.
 
 Stable linking metadata belongs on entities because entity IDs and friendly
@@ -101,6 +104,7 @@ external cards cannot reliably know the integration-specific merge rules.
 ### Positive
 
 - The chart can show the full recorded current day.
+- Provider-retained periods fill Recorder gaps without invented data.
 - History recorded before version 0.5.0 remains usable without a migration.
 - Restart-safe history is delegated to Home Assistant.
 - User-renamed entities continue to work.
@@ -114,7 +118,7 @@ external cards cannot reliably know the integration-specific merge rules.
 
 ### Trade-offs
 
-- The first chart render may briefly contain forecast data only while History
+- The first chart render may briefly contain provider data only while History
   loads.
 - Past values depend on Recorder retention and exclusion settings.
 - The frontend performs one History request per active quarter-hour and tariff
@@ -128,7 +132,7 @@ external cards cannot reliably know the integration-specific merge rules.
 - Do not cap provider forecasts at 24 hours.
 - Do not make Recorder a hard integration dependency.
 - Preserve exact timezone-aware period boundaries.
-- Preserve forecast-over-history precedence for duplicate periods.
+- Preserve provider-over-history precedence for duplicate periods.
 - Keep coordinator listener updates independent of provider-payload equality;
   current-period sensor values and attributes change with time.
 - Synchronize visible dashboard-card axes from raw extrema and keep grid

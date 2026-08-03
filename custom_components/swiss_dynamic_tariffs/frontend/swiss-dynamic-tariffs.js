@@ -1,7 +1,8 @@
 const CARD_TAG = "swiss-dynamic-tariffs-card";
 const CARD_TYPE = `custom:${CARD_TAG}`;
 const STRATEGY_TYPE = "swiss-dynamic-tariffs";
-const FRONTEND_VERSION = "0.5.6";
+const FRONTEND_VERSION = "0.5.7";
+const DASHBOARD_PANEL_TAG = "swiss-dynamic-tariffs-panel";
 const PANEL_TAG = `swiss-dynamic-tariffs-panel-${FRONTEND_VERSION.replaceAll(
   ".",
   "-",
@@ -2215,6 +2216,11 @@ class SwissDynamicTariffsPanel extends HTMLElement {
   }
 }
 
+// The automatically provisioned dashboard stores a stable card type instead
+// of a Community strategy. A separate subclass is required because the Custom
+// Elements registry permits one constructor to be registered under one name.
+class SwissDynamicTariffsAutomaticPanel extends SwissDynamicTariffsPanel {}
+
 class SwissDynamicTariffsCardEditor extends HTMLElement {
   constructor() {
     super();
@@ -2311,6 +2317,10 @@ if (!customElements.get(PANEL_CARD_TAG)) {
 
 if (!customElements.get(PANEL_TAG)) {
   customElements.define(PANEL_TAG, SwissDynamicTariffsPanel);
+}
+
+if (!customElements.get(DASHBOARD_PANEL_TAG)) {
+  customElements.define(DASHBOARD_PANEL_TAG, SwissDynamicTariffsAutomaticPanel);
 }
 
 if (!customElements.get("swiss-dynamic-tariffs-card-editor")) {

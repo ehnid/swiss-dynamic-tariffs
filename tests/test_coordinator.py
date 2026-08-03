@@ -273,7 +273,7 @@ def test_average_price():
 
 
 def test_future_periods_returns_all_future_prices():
-    """Test returning every future quarter hour for one tariff component."""
+    """Test returning the active and every future quarter hour."""
 
     frozen_now, periods = _frozen_quarter_hours()
     coordinator = SwissDynamicTariffsCoordinator.__new__(SwissDynamicTariffsCoordinator)
@@ -283,7 +283,21 @@ def test_future_periods_returns_all_future_prices():
         "custom_components.swiss_dynamic_tariffs.coordinator.dt_util.now",
         return_value=frozen_now,
     ):
-        assert coordinator.future_periods("electricity") == periods[2:]
+        assert coordinator.future_periods("electricity") == periods[1:]
+
+
+def test_published_periods_retains_provider_supplied_history():
+    """Do not discard earlier periods that remain in the provider response."""
+
+    frozen_now, periods = _frozen_quarter_hours()
+    coordinator = SwissDynamicTariffsCoordinator.__new__(SwissDynamicTariffsCoordinator)
+    coordinator.data = periods
+
+    with patch(
+        "custom_components.swiss_dynamic_tariffs.coordinator.dt_util.now",
+        return_value=frozen_now,
+    ):
+        assert coordinator.published_periods("electricity") == periods
 
 
 def test_future_periods_omits_missing_tariff_values():
@@ -302,7 +316,7 @@ def test_future_periods_omits_missing_tariff_values():
         "custom_components.swiss_dynamic_tariffs.coordinator.dt_util.now",
         return_value=frozen_now,
     ):
-        assert coordinator.future_periods("electricity") == [periods[3]]
+        assert coordinator.future_periods("electricity") == [periods[1], periods[3]]
 
 
 def test_cheapest_period_without_data():

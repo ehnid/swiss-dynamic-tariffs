@@ -227,7 +227,7 @@ class SwissDynamicTariffForecastSensor(
     SwissDynamicTariffsEntity,
     SensorEntity,
 ):
-    """Sensor exposing all published future quarter-hour prices."""
+    """Sensor exposing the provider's complete published quarter-hour window."""
 
     entity_description = FORECAST_DESCRIPTION
     _attr_has_entity_name = True
@@ -244,9 +244,9 @@ class SwissDynamicTariffForecastSensor(
 
     @property
     def native_value(self) -> float | None:
-        """Return the duration covered by future prices in hours."""
+        """Return the duration covered by the provider publication in hours."""
 
-        periods = self.coordinator.future_periods()
+        periods = self.coordinator.published_periods()
 
         if not periods:
             return None
@@ -258,9 +258,9 @@ class SwissDynamicTariffForecastSensor(
 
     @property
     def extra_state_attributes(self) -> dict[str, object] | None:
-        """Return every future period and all provider-supported prices."""
+        """Return every published period and all provider-supported prices."""
 
-        periods = self.coordinator.future_periods()
+        periods = self.coordinator.published_periods()
 
         if not periods:
             return None

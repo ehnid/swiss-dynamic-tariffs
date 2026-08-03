@@ -163,7 +163,7 @@ class SwissDynamicTariffsCoordinator(
         return sum(values) / len(values)
 
     def future_periods(self, tariff_type: str | None = None) -> list[TariffPeriod]:
-        """Return every future period, optionally filtered by tariff component."""
+        """Return the active and future periods for a tariff component."""
 
         if not self.data:
             return []
@@ -173,8 +173,28 @@ class SwissDynamicTariffsCoordinator(
         return [
             period
             for period in self.data
-            if period.start > now
+            if period.end > now
             and (tariff_type is None or getattr(period, tariff_type, None) is not None)
+        ]
+
+    def published_periods(
+        self,
+        tariff_type: str | None = None,
+    ) -> list[TariffPeriod]:
+        """Return the complete period window currently published by the provider.
+
+        Some providers, notably Primeo Energie, continue to publish all periods
+        from the beginning of the current day. Retaining those original values
+        lets the dashboard close Recorder gaps without synthesizing history.
+        """
+
+        if not self.data:
+            return []
+
+        return [
+            period
+            for period in self.data
+            if tariff_type is None or getattr(period, tariff_type, None) is not None
         ]
 
     def _upcoming_periods(self) -> list[TariffPeriod]:

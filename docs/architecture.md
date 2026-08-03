@@ -108,9 +108,11 @@ Price sensor attributes include:
 | `tariff_role`      | Current, next, minimum, maximum or average role.            |
 | `tariff_entry_id`  | Stable link between entities belonging to one tariff entry. |
 
-The forecast sensor exposes all future periods under `prices`. Its state is the
-sum of their durations in hours. `tariff_entry_id` links it to the corresponding
-current-price sensors without depending on user-editable entity IDs or names.
+The forecast sensor exposes the complete period window currently returned by
+the provider under `prices`, including past periods that remain published. Its
+state is the sum of the published durations in hours. `tariff_entry_id` links it
+to the corresponding current-price sensors without depending on user-editable
+entity IDs or names.
 
 The linking attributes are intentionally data, not presentation: the frontend
 can discover renamed entities while provider and entity code remain unaware of
@@ -127,10 +129,15 @@ dashboard can be deleted.
 A small integration-owned storage marker records successful initial
 provisioning. If the marker exists but the dashboard does not, deletion is
 treated as intentional and the dashboard is not recreated. Existing matching
-dashboards are adopted without modifying their metadata or content. The
-dashboard configuration contains only the
-`custom:swiss-dynamic-tariffs` strategy; tariff cards remain dynamically
+dashboards are adopted without modifying their metadata or user-edited content.
+The dashboard configuration contains a normal panel view with the stable
+`custom:swiss-dynamic-tariffs-panel` card; tariff entities remain dynamically
 discovered at render time.
+
+Releases through 0.5.6 stored only the
+`custom:swiss-dynamic-tariffs` strategy. A layout version in the provisioning
+marker migrates that exact integration-created configuration to the stable
+card. Any other configuration is treated as user-edited and is not changed.
 
 Home Assistant currently exposes storage-dashboard creation through its
 WebSocket collection but not as a public Python helper. The integration obtains
@@ -153,7 +160,7 @@ The bundled JavaScript registers:
 
 For each card:
 
-1. Forecast periods are parsed from the forecast sensor.
+1. All provider-published periods are parsed from the forecast sensor.
 2. Current-price sensors belonging to the same `tariff_entry_id` are found.
 3. Home Assistant History is queried for the current day.
 4. Historical states with recorded `start`/`end` attributes retain those exact
@@ -161,13 +168,13 @@ For each card:
 5. Older states without period attributes are expanded from their Recorder
    timestamps onto the quarter-hour grid. This preserves history written before
    the linkage attributes were introduced in version 0.5.0.
-6. Exact history and forecast periods are merged by start/end timestamp.
+6. Exact history and provider periods are merged by start/end timestamp.
 7. The result is split into calendar days in the configured Home Assistant
    timezone.
 
-The later data source wins during a merge. Forecast data is applied after
-history, making the latest provider payload authoritative if both sources cover
-the same period.
+The later data source wins during a merge. Provider data is applied after
+history, making the latest payload authoritative if both sources cover the same
+period.
 
 History loading is cached by date, entity ID and current period start. This
 avoids a Recorder query for every Home Assistant state refresh while ensuring a
@@ -181,7 +188,8 @@ list compares equal. Recorder can therefore retain every quarter-hour,
 including consecutive periods with identical prices.
 
 History is optional. If the endpoint is unavailable or Recorder excludes the
-current-price sensors, the card continues with forecast data only.
+current-price sensors, the card continues with the complete period window still
+published by the provider.
 
 See
 [ADR 0001: Dashboard time-series composition](adr/0001-dashboard-time-series.md)
@@ -196,8 +204,10 @@ Today and tomorrow are always available as navigation choices. Additional
 buttons are created for every further date present in the provider data; there
 is no hard-coded 24-hour forecast limit.
 
-The strategy generates a panel-layout view containing one responsive overview
-card. That overview caps each complete tariff card—not just its SVG—at 40% of
+The automatically provisioned dashboard stores a stable responsive overview
+card directly in a panel-layout view. The optional Community strategy generates
+the same layout for manually created dashboards. The overview caps each
+complete tariff card—not just its SVG—at 40% of
 `window.screen.width` on desktop. The limit therefore follows the user's screen,
 not the width of the Home Assistant content frame. On the 1920 × 1080 reference
 screen this is 768 pixels. If the browser window is narrowed, that same maximum
@@ -259,17 +269,18 @@ query-string cache key is read from `manifest.json`, so every integration
 version loads a matching frontend bundle.
 
 The strategy's responsive overview and its internal card also use component
-names derived from that version. Browsers cannot redefine an existing custom
-element, so versioning the elements prevents a Home Assistant reconnect from
-silently retaining the previous graph implementation. The public custom-card
-tag remains stable for Lovelace compatibility and may require a page reload
-after an upgrade.
+names derived from that version. The automatically stored dashboard references
+a separate stable overview tag, preventing Lovelace strategy-registration
+timing from blocking the complete dashboard. Browsers cannot redefine an
+existing custom element, so versioning the internal elements prevents a Home
+Assistant reconnect from silently retaining the previous graph implementation.
+Stable public tags may require a page reload after an upgrade.
 
-The public card and versioned internal card must use distinct JavaScript
-constructors. The Custom Elements registry rejects registering one constructor
-under two names; violating this rule aborts module evaluation and leaves a fresh
-panel blank. The internal card therefore uses a dedicated subclass even though
-it shares all behaviour.
+The public card, stable overview and versioned internal elements must use
+distinct JavaScript constructors. The Custom Elements registry rejects
+registering one constructor under two names; violating this rule aborts module
+evaluation and leaves a fresh panel blank. Dedicated subclasses therefore share
+behaviour without sharing constructor identity.
 
 The manifest version, JavaScript `FRONTEND_VERSION` and panel component name
 must be changed together for each published frontend change. A regression test
