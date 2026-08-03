@@ -141,6 +141,9 @@ The config-entry options flow exposes an explicit dashboard repair action. It
 calls the same provisioning function with permission to ignore a current
 deletion marker, but the existing-dashboard guard remains in force. The action
 can therefore restore a missing dashboard without overwriting user content.
+It completes with empty option data because it performs an immediate action;
+this also avoids relying on version-dependent config-entry injection into
+Home Assistant's `OptionsFlow`.
 
 Releases through 0.5.6 stored only the
 `custom:swiss-dynamic-tariffs` strategy. A layout version in the provisioning

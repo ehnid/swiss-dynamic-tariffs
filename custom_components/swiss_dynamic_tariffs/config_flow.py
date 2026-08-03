@@ -102,7 +102,12 @@ class SwissDynamicTariffsOptionsFlow(OptionsFlow):
                 _LOGGER.exception("Unable to restore the tariff dashboard")
                 errors["base"] = "dashboard_creation_failed"
             else:
-                return self.async_create_entry(data=self.config_entry.options)
+                # This flow performs an action and has no persistent options.
+                # Avoid accessing OptionsFlow.config_entry here: older Home
+                # Assistant releases do not inject that property automatically
+                # and would report a configuration error after successfully
+                # creating the dashboard.
+                return self.async_create_entry(data={})
 
         return self.async_show_form(
             step_id="dashboard",

@@ -198,6 +198,7 @@ async def test_options_flow_restores_dashboard(hass):
         )
 
     assert result["type"] == "create_entry"
+    assert result["data"] == {}
     restore_dashboard.assert_awaited_once_with(hass, force=True)
 
 

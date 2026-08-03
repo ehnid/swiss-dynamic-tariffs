@@ -260,7 +260,7 @@ process.stdout.write(JSON.stringify({
         },
         "dashboardLayout": {
             "viewType": "panel",
-            "cardType": "custom:swiss-dynamic-tariffs-panel-0-5-8",
+            "cardType": "custom:swiss-dynamic-tariffs-panel-0-5-9",
         },
         "textKeysMatch": True,
         "localizedLegend": {
